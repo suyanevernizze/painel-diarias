@@ -1,69 +1,283 @@
-Binotto Transportes
-Painel de Diárias & Adicionais
-Nenhum arquivo carregado  Carregar planilha Nenhum arquivo escolhido
-✕
-Arraste sua planilha aqui
-ou clique para selecionar o arquivo
-Suporta .xlsx, .xls e .csv  ·  Colunas detectadas automaticamente
-Filtros
-Filial 
-Todas
-Contrato 
-Todos
-Ocorrência 
-Todas
-Status 
-Todos
-Cliente 
-Todos
-Placa 
-ex: ABC1234
-CTe 
-número CTe
-NF 
-número NF
-Data início 
-dd/mm/aaaa
-Data fim 
-dd/mm/aaaa
-Período rápido 
-Personalizado
-↺ Limpar filtros
-Indicadores
- Exportar CSV  Exportar XLSX
-Linha do tempo
-Evolução mensal — Total R$ e Quantidade de ocorrências  (clique em uma barra para ver detalhes do mês)
-Distribuição — clique nos gráficos para detalhar
-Top 10 clientes — Total R$
-Por tipo de ocorrência
-Por filial
-Por tipo de contrato
-Por status
-Novo registro
-Filial
-ex: Lages
-Cliente
-ex: Klabin
-Placa
-ABC1234
-CTe
-nº CTe
-NF
-nº NF
-Contrato 
-FROTA
-Ocorrência 
-DESCARGA
-Total R$
-0.00
-Horas
-0.0
-Status 
-FATURADA
-+ Adicionar
-Registros
-Registros
-0
-🔍  Buscar cliente, filial, placa, CTe, NF...
-Filial	Cliente	Placa	CTe	NF	Contrato	Ocorrência	Horas	Total R$	Status	
-Binotto Transportes — Painel de Diárias e Adicionais — Desenvolvido com Claude AI
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Binotto — Painel de Diárias</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    <img class="logo-img" src="assets/img/logo.jpg" alt="Binotto Transportes">
+    <div class="logo-div"></div>
+    <div class="logo-sub">Painel de Diárias &amp; Adicionais</div>
+  </div>
+  <div class="hdr-right">
+    <span class="file-badge" id="fileInfo">Nenhum arquivo carregado</span>
+    <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      Carregar planilha
+    </button>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="loadFile(this)">
+  </div>
+</header>
+
+<!-- MODAL DRILL-DOWN -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalBox">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-metrics" id="modalMetrics"></div>
+    <div class="table-wrap">
+      <table>
+        <thead id="modalThead"></thead>
+        <tbody id="modalTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+
+  <!-- DROP ZONE -->
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <div class="drop-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <polyline points="9 15 12 12 15 15"/>
+      </svg>
+    </div>
+    <div class="drop-title">Arraste sua planilha aqui</div>
+    <div class="drop-sub">ou clique para selecionar o arquivo</div>
+    <div class="drop-note">Suporta .xlsx, .xls e .csv &nbsp;·&nbsp; Colunas detectadas automaticamente</div>
+  </div>
+
+  <div id="dashboard">
+
+    <!-- FILTROS -->
+    <div class="slabel">Filtros</div>
+    <div class="controls">
+      <div class="cg">
+        <label>Filial</label>
+        <select id="selFilial" onchange="applyFilters()"><option value="">Todas</option></select>
+      </div>
+      <div class="cg">
+        <label>Contrato</label>
+        <select id="selContrato" onchange="applyFilters()"><option value="">Todos</option></select>
+      </div>
+      <div class="cg">
+        <label>Ocorrência</label>
+        <select id="selOcorrencia" onchange="applyFilters()"><option value="">Todas</option></select>
+      </div>
+      <div class="cg">
+        <label>Status</label>
+        <select id="selStatus" onchange="applyFilters()"><option value="">Todos</option></select>
+      </div>
+      <div class="cg">
+        <label>Cliente</label>
+        <select id="selCliente" onchange="applyFilters()"><option value="">Todos</option></select>
+      </div>
+      <div class="cg">
+        <label>Placa</label>
+        <input type="text" id="selPlaca" placeholder="ex: ABC1234" oninput="applyFilters()">
+      </div>
+      <div class="cg">
+        <label>CTe</label>
+        <input type="text" id="selCte" placeholder="número CTe" oninput="applyFilters()">
+      </div>
+      <div class="cg">
+        <label>NF</label>
+        <input type="text" id="selNf" placeholder="número NF" oninput="applyFilters()">
+      </div>
+      <div class="cg">
+        <label>Data início</label>
+        <input type="date" id="selDtI" onchange="applyFilters()">
+      </div>
+      <div class="cg">
+        <label>Data fim</label>
+        <input type="date" id="selDtF" onchange="applyFilters()">
+      </div>
+      <div class="cg">
+        <label>Período rápido</label>
+        <select id="selPeriodo" onchange="applyQuickPeriod()">
+          <option value="">Personalizado</option>
+          <option value="7">Últimos 7 dias</option>
+          <option value="30">Últimos 30 dias</option>
+          <option value="90">Últimos 90 dias</option>
+          <option value="365">Último ano</option>
+          <option value="thismonth">Mês atual</option>
+          <option value="lastmonth">Mês anterior</option>
+          <option value="thisyear">Ano atual</option>
+        </select>
+      </div>
+      <button class="btn-reset" onclick="resetFilters()">↺ Limpar filtros</button>
+    </div>
+
+    <!-- INDICADORES -->
+    <div class="slabel">Indicadores</div>
+    <div class="metrics" id="metrics"></div>
+
+    <!-- EXPORTAR -->
+    <div class="export-bar">
+      <button class="btn-export" onclick="exportCSV()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+        Exportar CSV
+      </button>
+      <button class="btn-export" onclick="exportXLSX()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        Exportar XLSX
+      </button>
+    </div>
+
+    <!-- LINHA DO TEMPO -->
+    <div class="slabel">Linha do tempo</div>
+    <div class="card" style="margin-bottom:1.25rem">
+      <div class="card-title">
+        Evolução mensal — Total R$ e Quantidade de ocorrências
+        <span style="font-size:10px;color:var(--tx3);font-weight:400">&nbsp;(clique em uma barra para ver detalhes do mês)</span>
+      </div>
+      <div class="chart-clickable" style="position:relative;height:290px">
+        <canvas id="cMensal"></canvas>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW 2 -->
+    <div class="slabel">
+      Distribuição
+      <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx3);margin-left:6px">— clique nos gráficos para detalhar</span>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-title">Top 10 clientes — Total R$</div>
+        <div class="chart-clickable" style="position:relative;height:260px">
+          <canvas id="cCliente"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Por tipo de ocorrência</div>
+        <div class="legend" id="lgOc"></div>
+        <div class="chart-clickable" style="position:relative;height:220px">
+          <canvas id="cOcorrencia"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="g3">
+      <div class="card">
+        <div class="card-title">Por filial</div>
+        <div class="legend" id="lgFilial"></div>
+        <div class="chart-clickable" style="position:relative;height:190px">
+          <canvas id="cFilial"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Por tipo de contrato</div>
+        <div class="legend" id="lgContrato"></div>
+        <div class="chart-clickable" style="position:relative;height:190px">
+          <canvas id="cContrato"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Por status</div>
+        <div class="legend" id="lgStatus"></div>
+        <div class="chart-clickable" style="position:relative;height:190px">
+          <canvas id="cStatus"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOVO REGISTRO -->
+    <div class="slabel">Novo registro</div>
+    <div class="add-section">
+      <div class="add-form">
+        <div class="cg"><label>Filial</label><input id="iFilial" placeholder="ex: Lages"></div>
+        <div class="cg"><label>Cliente</label><input id="iCliente" placeholder="ex: Klabin"></div>
+        <div class="cg"><label>Placa</label><input id="iPlaca" placeholder="ABC1234" style="width:100px"></div>
+        <div class="cg"><label>CTe</label><input id="iCte" placeholder="nº CTe" style="width:100px"></div>
+        <div class="cg"><label>NF</label><input id="iNf" placeholder="nº NF" style="width:100px"></div>
+        <div class="cg">
+          <label>Contrato</label>
+          <select id="iContrato">
+            <option>FROTA</option>
+            <option>AGREGADO</option>
+            <option>TERCEIRO</option>
+          </select>
+        </div>
+        <div class="cg">
+          <label>Ocorrência</label>
+          <select id="iOcorrencia">
+            <option>DESCARGA</option>
+            <option>CARREGAMENTO</option>
+            <option>KM EXTRA</option>
+          </select>
+        </div>
+        <div class="cg"><label>Total R$</label><input id="iValor" type="number" placeholder="0.00" style="width:105px"></div>
+        <div class="cg"><label>Horas</label><input id="iHoras" type="number" placeholder="0.0" style="width:80px"></div>
+        <div class="cg">
+          <label>Status</label>
+          <select id="iStatus">
+            <option>FATURADA</option>
+            <option>AG. APROVAÇÃO</option>
+            <option>REJEITADA</option>
+          </select>
+        </div>
+        <button class="btn-add" onclick="addRow()">+ Adicionar</button>
+      </div>
+    </div>
+
+    <!-- TABELA -->
+    <div class="slabel">Registros</div>
+    <div class="table-section">
+      <div class="table-hdr">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="table-title">Registros</span>
+          <span class="table-count" id="tableCount">0</span>
+        </div>
+        <input class="table-search" id="tableSearch" placeholder="🔍  Buscar cliente, filial, placa, CTe, NF..." oninput="applyFilters()">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="srt('filial')">Filial</th>
+              <th onclick="srt('cliente')">Cliente</th>
+              <th onclick="srt('placa')">Placa</th>
+              <th onclick="srt('cte')">CTe</th>
+              <th onclick="srt('nf')">NF</th>
+              <th onclick="srt('contrato')">Contrato</th>
+              <th onclick="srt('ocorrencia')">Ocorrência</th>
+              <th onclick="srt('horas')">Horas</th>
+              <th onclick="srt('valor')">Total R$</th>
+              <th onclick="srt('status')">Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+  </div><!-- /#dashboard -->
+</main>
+
+<footer>Binotto Transportes &mdash; Painel de Diárias e Adicionais &mdash; Desenvolvido com Claude AI</footer>
+
+<script src="assets/js/app.js"></script>
+</body>
+</html>
