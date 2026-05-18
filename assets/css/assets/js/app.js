@@ -37,53 +37,118 @@ dz.addEventListener('drop', e => {
 });
 function loadFile(i) { if (i.files[0]) processFile(i.files[0]); }
 
-// ── LOAD FILE ──
+// ── HELPERS ──
+// Converte "Total de Horas" que vem como fração de dia (serial Excel) ou timedelta em horas decimais
+function parseHoras(v) {
+  if (!v && v !== 0) return 0;
+  // Se for número: o Excel armazena duração como fração de 1 dia (ex: 0.5 = 12h)
+  if (typeof v === 'number') return parseFloat((v * 24).toFixed(2));
+  const s = String(v);
+  // Formato "X days HH:MM:SS" (pandas timedelta exportado)
+  const td = s.match(/(\d+)\s+days?\s+(\d+):(\d+)/i);
+  if (td) return parseFloat((parseInt(td[1])*24 + parseInt(td[2]) + parseInt(td[3])/60).toFixed(2));
+  // Formato "HH:MM:SS"
+  const hms = s.match(/^(\d+):(\d+)/);
+  if (hms) return parseFloat((parseInt(hms[1]) + parseInt(hms[2])/60).toFixed(2));
+  return parseFloat(s.replace(',','.')) || 0;
+}
+
+// ── LOAD FILE (usa ArrayBuffer — compatível com Chrome, Edge, Firefox, Safari) ──
 function processFile(file) {
-  document.getElementById('fileInfo').textContent = file.name;
+  const badge = document.getElementById('fileInfo');
+  badge.textContent = '⏳ Carregando ' + file.name + '…';
+
   const reader = new FileReader();
-  reader.onload = e => {
-    const wb = XLSX.read(e.target.result, { type: 'binary', cellDates: true });
-    const sn = wb.SheetNames;
-    const ms = sn.find(n => /diária|diaria|base/i.test(n)) || sn[0];
-    const rows = XLSX.utils.sheet_to_json(wb.Sheets[ms], { defval: '' });
-    const data = [];
-    rows.forEach(row => {
-      const keys = Object.keys(row);
-      const get = (...ns) => {
-        for (const n of ns) {
-          const k = keys.find(k =>
-            k.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'')
-             .includes(n.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,''))
-          );
-          if (k !== undefined && row[k] !== '') return row[k];
-        }
-        return '';
-      };
-      const valor     = parseFloat(String(get('TOTALR','TOTAL R','valor','total')).replace(',', '.')) || 0;
-      const horas     = parseFloat(String(get('Totaldehoras','horas','Total de Horas','tempoespera')).replace(',', '.')) || 0;
-      const filial    = String(get('Filial')).trim();
-      const cliente   = String(get('ClienteKlabin','cliente','Cliente')).trim();
-      const contrato  = String(get('Contrato')).trim().toUpperCase();
-      const ocorrencia = String(get('TipodeOcorrncia','TipodeOcorrencia','ocorrencia','Tipo','Ocorrncia')).trim().toUpperCase();
-      const status    = String(get('STATUSDASTE','STATUS','status','Status')).trim().toUpperCase();
-      const placa     = String(get('Placa','placa','PLACA','veículo','veiculo')).trim().toUpperCase();
-      const cte       = String(get('CTe','cte','CTE','CT-e','conhecimento')).trim();
-      const nf        = String(get('NF','nf','NotaFiscal','nota','NF-e','NFe')).trim();
-      const dataT     = get('DataTransporte','Data','data','DataTransp');
-      if (filial || cliente || valor)
-        data.push({ filial, cliente, contrato, ocorrencia, status, placa, cte, nf, horas, valor, data: dataT });
-    });
-    if (!data.length) {
-      alert('Não foi possível identificar os dados. Verifique se a planilha contém colunas como: Filial, Cliente Klabin, Contrato, Tipo de Ocorrência, Total R$, STATUS DASTE.');
-      return;
-    }
-    allData = data;
-    document.getElementById('dropZone').classList.add('hidden');
-    document.getElementById('dashboard').classList.add('visible');
-    populateFilters();
-    applyFilters();
+
+  reader.onerror = () => {
+    badge.textContent = '❌ Erro ao ler o arquivo';
+    alert('Não foi possível ler o arquivo.\nTente novamente ou use Chrome/Edge.');
   };
-  reader.readAsBinaryString(file);
+
+  reader.onload = e => {
+    try {
+      // Lê com ArrayBuffer (mais compatível que readAsBinaryString)
+      const wb = XLSX.read(new Uint8Array(e.target.result), {
+        type: 'array',
+        cellDates: true,
+        cellNF: false,
+        raw: false
+      });
+
+      // Prioriza aba "BASE DIÁRIAS", depois qualquer aba com "diaria"/"base"
+      const sn = wb.SheetNames;
+      const ms = sn.find(n => /BASE\s*DI[AÁ]RIAS/i.test(n))
+               || sn.find(n => /diária|diaria|base/i.test(n))
+               || sn[0];
+
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[ms], { defval: '', raw: false });
+
+      if (!rows.length) {
+        badge.textContent = '⚠️ Aba vazia ou não reconhecida';
+        alert('A aba "' + ms + '" não contém dados.\nAbas encontradas: ' + sn.join(', '));
+        return;
+      }
+
+      const data = [];
+
+      rows.forEach(row => {
+        // Mapeamento EXATO das colunas da planilha Base_de_Diarias_e_Adicionais.xlsx
+        const filial     = String(row['Filial']               || '').trim().toUpperCase();
+        const cliente    = String(row['Cliente Klabin']        || '').trim().toUpperCase();
+        const contrato   = String(row['Contrato']              || '').trim().toUpperCase();
+        const ocorrencia = String(row['Tipo de Ocorrência']    || '').trim().toUpperCase();
+        const status     = String(row['STATUS DASTE']          || '').trim().toUpperCase();
+        const placa      = String(row['Placa Veículo']         || '').trim().toUpperCase();
+        const cte        = String(row['CT-e Origem']           || '').trim();
+        const nf         = String(row['Nº NF']                 || '').trim();
+        const ste        = String(row['STE']                   || '').trim();
+        const dataT      = row['Data Transporte'] || row['Data Hora Chegada'] || '';
+        const valorRaw   = row['TOTAL R$'];
+        const horasRaw   = row['Total de Horas'];
+
+        // Valor: pode vir como número ou string com vírgula
+        const valor = typeof valorRaw === 'number'
+          ? valorRaw
+          : parseFloat(String(valorRaw || '0').replace(/\./g,'').replace(',','.')) || 0;
+
+        const horas = parseHoras(horasRaw);
+
+        // Ignora linhas totalmente vazias
+        if (!filial && !cliente && !valor) return;
+
+        data.push({ filial, cliente, contrato, ocorrencia, status, placa, cte, nf, ste, horas, valor, data: dataT });
+      });
+
+      if (!data.length) {
+        badge.textContent = '⚠️ Nenhum dado reconhecido';
+        alert(
+          'Nenhuma linha foi reconhecida na aba "' + ms + '".\n\n' +
+          'Colunas esperadas:\n' +
+          '  • Filial\n  • Cliente Klabin\n  • Contrato\n  • Tipo de Ocorrência\n' +
+          '  • STATUS DASTE\n  • Placa Veículo\n  • CT-e Origem\n  • Nº NF\n' +
+          '  • TOTAL R$\n  • Total de Horas\n  • Data Transporte\n\n' +
+          'Colunas encontradas na planilha:\n' +
+          Object.keys(rows[0] || {}).join(', ')
+        );
+        return;
+      }
+
+      badge.textContent = '✅ ' + file.name + ' — ' + data.length + ' registros carregados';
+      allData = data;
+      document.getElementById('dropZone').classList.add('hidden');
+      document.getElementById('dashboard').classList.add('visible');
+      populateFilters();
+      applyFilters();
+
+    } catch (err) {
+      badge.textContent = '❌ Falha ao processar';
+      alert('Erro ao processar a planilha:\n' + err.message);
+      console.error(err);
+    }
+  };
+
+  // ArrayBuffer é o método correto — readAsBinaryString é obsoleto e bloqueado em alguns browsers
+  reader.readAsArrayBuffer(file);
 }
 
 // ── FILTERS ──
@@ -125,6 +190,7 @@ function applyFilters() {
   const placa = document.getElementById('selPlaca').value.toUpperCase().trim();
   const cte   = document.getElementById('selCte').value.trim();
   const nf    = document.getElementById('selNf').value.trim();
+  const ste   = document.getElementById('selSte').value.trim();
   const di    = document.getElementById('selDtI').value;
   const df    = document.getElementById('selDtF').value;
   const dtI   = di ? new Date(di + 'T00:00:00') : null;
@@ -139,6 +205,7 @@ function applyFilters() {
     if (placa && !r.placa.includes(placa)) return false;
     if (cte   && !r.cte.includes(cte))     return false;
     if (nf    && !r.nf.includes(nf))       return false;
+    if (ste   && !String(r.ste || '').includes(ste)) return false;
     if (q) {
       const hay = `${r.filial} ${r.cliente} ${r.contrato} ${r.placa} ${r.cte} ${r.nf}`.toLowerCase();
       if (!hay.includes(q)) return false;
@@ -156,7 +223,7 @@ function applyFilters() {
 
 function resetFilters() {
   ['selFilial','selContrato','selOcorrencia','selStatus','selCliente','selPeriodo'].forEach(id => document.getElementById(id).value = '');
-  ['selPlaca','selCte','selNf','tableSearch'].forEach(id => document.getElementById(id).value = '');
+  ['selPlaca','selCte','selNf','selSte','tableSearch'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('selDtI').value = '';
   document.getElementById('selDtF').value = '';
   applyFilters();
@@ -175,7 +242,7 @@ function srt(col) {
   if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
   else { sortCol = col; sortDir = (col === 'valor' || col === 'horas') ? 'desc' : 'asc'; }
   document.querySelectorAll('thead th').forEach(th => th.classList.remove('sa','sd'));
-  const cols = ['filial','cliente','placa','cte','nf','contrato','ocorrencia','horas','valor','status'];
+  const cols = ['filial','cliente','placa','cte','nf','ste','contrato','ocorrencia','horas','valor','status'];
   const idx = cols.indexOf(col);
   if (idx >= 0) {
     const ths = document.querySelectorAll('thead th');
@@ -436,7 +503,7 @@ function renderTable() {
     const ri = allData.indexOf(r), s = r.status || '';
     const badge = s.includes('FATURAD') ? 'bf' : s.includes('APROV') ? 'ba' : 'br';
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${r.filial||'—'}</td><td>${r.cliente||'—'}</td><td>${r.placa||'—'}</td><td>${r.cte||'—'}</td><td>${r.nf||'—'}</td><td>${r.contrato||'—'}</td><td>${r.ocorrencia||'—'}</td><td class="vc">${(r.horas||0).toFixed(1)}h</td><td class="vc">${fR(r.valor)}</td><td><span class="badge ${badge}">${s||'—'}</span></td><td><button class="btn-del" onclick="delRow(${ri})">✕</button></td>`;
+    tr.innerHTML = `<td>${r.filial||'—'}</td><td>${r.cliente||'—'}</td><td>${r.placa||'—'}</td><td>${r.cte||'—'}</td><td>${r.nf||'—'}</td><td>${r.ste||'—'}</td><td>${r.contrato||'—'}</td><td>${r.ocorrencia||'—'}</td><td class="vc">${(r.horas||0).toFixed(1)}h</td><td class="vc">${fR(r.valor)}</td><td><span class="badge ${badge}">${s||'—'}</span></td><td><button class="btn-del" onclick="delRow(${ri})">✕</button></td>`;
     tb.appendChild(tr);
   });
   const pg = document.getElementById('pagination');
@@ -483,9 +550,9 @@ function delRow(i) {
 
 // ── EXPORT ──
 function exportCSV() {
-  const h    = ['Filial','Cliente','Placa','CTe','NF','Contrato','Ocorrência','Horas','Total R$','Status'];
+  const h    = ['Filial','Cliente','Placa','CTe','NF','STE','Contrato','Ocorrência','Horas','Total R$','Status'];
   const rows = filteredData.map(r =>
-    [r.filial, r.cliente, r.placa, r.cte, r.nf, r.contrato, r.ocorrencia, r.horas, r.valor, r.status]
+    [r.filial, r.cliente, r.placa, r.cte, r.nf, r.ste, r.contrato, r.ocorrencia, r.horas, r.valor, r.status]
     .map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',')
   );
   dl('diarias.csv', '﻿' + h.join(',') + '\n' + rows.join('\n'), 'text/csv;charset=utf-8');
@@ -493,7 +560,7 @@ function exportCSV() {
 
 function exportXLSX() {
   const ws = XLSX.utils.json_to_sheet(filteredData.map(r => ({
-    Filial: r.filial, Cliente: r.cliente, Placa: r.placa, CTe: r.cte, NF: r.nf,
+    Filial: r.filial, Cliente: r.cliente, Placa: r.placa, CTe: r.cte, NF: r.nf, STE: r.ste,
     Contrato: r.contrato, 'Ocorrência': r.ocorrencia, Horas: r.horas,
     'Total R$': r.valor, Status: r.status
   })));
