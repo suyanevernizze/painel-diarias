@@ -294,6 +294,11 @@ footer {
   .metrics { grid-template-columns: 1fr 1fr; }
 }
 
+/* METRIC CLICKABLE */
+.metric-clickable { cursor: pointer !important; }
+.metric-clickable:hover { border-color: var(--bd3); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+.metric.c-red::before { background: var(--red); }
+
 </style>
 </head>
 <body>
@@ -596,7 +601,7 @@ const fS = v => (Number(v) || 0).toLocaleString('pt-BR', {
 function toDate(v) {
   if (!v) return null;
   if (v instanceof Date) return isNaN(v) ? null : v;
-  if (typeof v === 'number') return new Date(Math.round((v - 25569) * 86400 * 1000));
+  if (typeof v === 'number') return excelSerialToDate(v);
   const d = new Date(v);
   return isNaN(d) ? null : d;
 }
@@ -613,26 +618,38 @@ dz.addEventListener('drop', e => {
 });
 function loadFile(i) { if (i.files[0]) processFile(i.files[0]); }
 
-// ── HELPERS ──
-// Converte "Total de Horas" que vem como fração de dia (serial Excel) ou timedelta em horas decimais
 function parseHoras(v) {
   if (v === '' || v === null || v === undefined) return 0;
-  // Com raw:true, Excel envia duração como fração de dia (ex: 0.5 = 12h, 11.965 = 287h)
-  if (typeof v === 'number') return parseFloat((v * 24).toFixed(2));
-  // Caso venha como objeto Date (cellDates:true pode converter duração errado)
-  if (v instanceof Date) {
-    // Datas Excel base: se for menor que 1900, é duração
-    const ms = v.getTime() + v.getTimezoneOffset() * 60000;
-    return parseFloat((ms / 3600000).toFixed(2));
+  // Com cellDates:false e raw:true, duração [h]:mm chega como número de dias decimais
+  // Ex: 11.9653 dias = 287.17h
+  if (typeof v === 'number') {
+    const h = v * 24;
+    // Sanidade: horas razoáveis entre 0 e 8760 (1 ano)
+    return (h >= 0 && h <= 8760) ? parseFloat(h.toFixed(2)) : 0;
   }
   const s = String(v);
-  // "X days HH:MM:SS"
   const td = s.match(/(\d+)\s+days?\s+(\d+):(\d+)/i);
   if (td) return parseFloat((parseInt(td[1])*24 + parseInt(td[2]) + parseInt(td[3])/60).toFixed(2));
-  // "HH:MM:SS"
   const hms = s.match(/^(\d+):(\d+)/);
   if (hms) return parseFloat((parseInt(hms[1]) + parseInt(hms[2])/60).toFixed(2));
   return parseFloat(s.replace(',','.')) || 0;
+}
+
+// Converte serial Excel de data (número) para Date
+// Com cellDates:false, datas chegam como número serial do Excel
+function excelSerialToDate(serial) {
+  if (!serial && serial !== 0) return null;
+  if (typeof serial === 'number') {
+    // Excel serial: dias desde 1899-12-30
+    const ms = (serial - 25569) * 86400 * 1000;
+    const d = new Date(ms);
+    return isNaN(d) ? null : d;
+  }
+  if (typeof serial === 'string') {
+    const d = new Date(serial);
+    return isNaN(d) ? null : d;
+  }
+  return null;
 }
 
 // ── LOAD FILE (usa ArrayBuffer — compatível com Chrome, Edge, Firefox, Safari) ──
@@ -653,8 +670,8 @@ function processFile(file) {
       // cellDates:true converte seriais de data em objetos Date
       const wb = XLSX.read(new Uint8Array(e.target.result), {
         type: 'array',
-        cellDates: true,
-        cellNF: false,
+        cellDates: false,
+        cellNF: true,
         raw: true
       });
 
@@ -847,31 +864,160 @@ function renderMetrics() {
     return;
   }
   const vals  = d.map(r => r.valor).filter(v => v > 0);
-  const hs    = d.map(r => r.horas).filter(h => h > 0);
   const total = vals.reduce((s, v) => s + v, 0);
   const fat   = d.filter(r => r.status.includes('FATURAD')).reduce((s, r) => s + r.valor, 0);
-  const ag    = d.filter(r => r.status.includes('APROV')).reduce((s, r) => s + r.valor, 0);
-  const agN   = d.filter(r => r.status.includes('APROV')).length;
+
+  const agRows = d.filter(r => r.status.includes('APROV'));
+  const ag     = agRows.reduce((s, r) => s + r.valor, 0);
+
+  const rejRows = d.filter(r => r.status.includes('REJEIT'));
+  const rej     = rejRows.reduce((s, r) => s + r.valor, 0);
+
   const minV  = vals.length ? Math.min(...vals) : 0;
   const maxV  = vals.length ? Math.max(...vals) : 0;
-  const minH  = hs.length   ? Math.min(...hs)   : 0;
-  const maxH  = hs.length   ? Math.max(...hs)   : 0;
-  const avgH  = hs.length   ? hs.reduce((s, h) => s + h, 0) / hs.length : 0;
-  const avgV  = d.length    ? total / d.length  : 0;
-  const rMinV = d.find(r => r.valor === minV), rMaxV = d.find(r => r.valor === maxV);
-  const rMinH = d.find(r => r.horas === minH), rMaxH = d.find(r => r.horas === maxH);
+  const avgV  = d.length   ? total / d.length   : 0;
+
+  const rMinV = d.find(r => r.valor === minV);
+  const rMaxV = d.find(r => r.valor === maxV);
+
+  // Horas — filtra apenas valores positivos e razoáveis (< 8760h = 1 ano)
+  const hs   = d.map(r => r.horas).filter(h => h > 0 && h < 8760);
+  const minH = hs.length ? Math.min(...hs) : 0;
+  const maxH = hs.length ? Math.max(...hs) : 0;
+  const avgH = hs.length ? hs.reduce((s, h) => s + h, 0) / hs.length : 0;
+  const rMinH = d.find(r => r.horas === minH);
+  const rMaxH = d.find(r => r.horas === maxH);
 
   document.getElementById('metrics').innerHTML = `
-    <div class="metric"><span class="m-icon">💰</span><div class="m-label">Total geral</div><div class="m-val">${fS(total)}</div><div class="m-sub">${d.length.toLocaleString('pt-BR')} registros</div></div>
-    <div class="metric"><span class="m-icon">✅</span><div class="m-label">Faturado</div><div class="m-val">${fS(fat)}</div><div class="m-sub">${total ? Math.round(fat / total * 100) : 0}% do total</div></div>
-    <div class="metric c-amber"><span class="m-icon">⏳</span><div class="m-label">Ag. aprovação</div><div class="m-val">${fS(ag)}</div><div class="m-sub">${agN} pendentes</div></div>
-    <div class="metric c-teal"><span class="m-icon">📊</span><div class="m-label">Ticket médio</div><div class="m-val">${fS(avgV)}</div><div class="m-sub">por ocorrência</div></div>
-    <div class="metric c-blue"><span class="m-icon">🔽</span><div class="m-label">Menor diária</div><div class="m-val">${fS(minV)}</div><div class="m-sub">${rMinV ? rMinV.cliente || rMinV.filial : '—'}</div></div>
-    <div class="metric c-gold"><span class="m-icon">🔼</span><div class="m-label">Maior diária</div><div class="m-val">${fS(maxV)}</div><div class="m-sub">${rMaxV ? rMaxV.cliente || rMaxV.filial : '—'}</div></div>
-    <div class="metric c-blue"><span class="m-icon">🕐</span><div class="m-label">Menor espera</div><div class="m-val">${minH.toFixed(1)}h</div><div class="m-sub">${rMinH ? rMinH.cliente || rMinH.filial : '—'}</div></div>
-    <div class="metric c-gold"><span class="m-icon">🕙</span><div class="m-label">Maior espera</div><div class="m-val">${maxH.toFixed(1)}h</div><div class="m-sub">${rMaxH ? rMaxH.cliente || rMaxH.filial : '—'}</div></div>
-    <div class="metric c-purple"><span class="m-icon">⏱️</span><div class="m-label">Média de espera</div><div class="m-val">${avgH.toFixed(1)}h</div><div class="m-sub">por ocorrência</div></div>
+    <div class="metric" style="cursor:default">
+      <span class="m-icon">💰</span>
+      <div class="m-label">Total geral</div>
+      <div class="m-val">${fS(total)}</div>
+      <div class="m-sub">${d.length.toLocaleString('pt-BR')} registros</div>
+    </div>
+    <div class="metric" style="cursor:default">
+      <span class="m-icon">✅</span>
+      <div class="m-label">Faturado</div>
+      <div class="m-val">${fS(fat)}</div>
+      <div class="m-sub">${total ? Math.round(fat / total * 100) : 0}% do total</div>
+    </div>
+    <div class="metric c-amber metric-clickable" onclick="openModalAg()">
+      <span class="m-icon">⏳</span>
+      <div class="m-label">Ag. aprovação</div>
+      <div class="m-val">${fS(ag)}</div>
+      <div class="m-sub">${agRows.length} pendentes</div>
+    </div>
+    <div class="metric c-red metric-clickable" onclick="openModalRej()">
+      <span class="m-icon">❌</span>
+      <div class="m-label">Rejeitado</div>
+      <div class="m-val">${fS(rej)}</div>
+      <div class="m-sub">${rejRows.length} registros</div>
+    </div>
+    <div class="metric c-teal" style="cursor:default">
+      <span class="m-icon">📊</span>
+      <div class="m-label">Ticket médio</div>
+      <div class="m-val">${fS(avgV)}</div>
+      <div class="m-sub">por ocorrência</div>
+    </div>
+    <div class="metric c-blue metric-clickable" onclick="openModalMin()">
+      <span class="m-icon">🔽</span>
+      <div class="m-label">Menor diária</div>
+      <div class="m-val">${fS(minV)}</div>
+      <div class="m-sub">${rMinV ? rMinV.cliente || rMinV.filial : '—'}</div>
+    </div>
+    <div class="metric c-gold metric-clickable" onclick="openModalMax()">
+      <span class="m-icon">🔼</span>
+      <div class="m-label">Maior diária</div>
+      <div class="m-val">${fS(maxV)}</div>
+      <div class="m-sub">${rMaxV ? rMaxV.cliente || rMaxV.filial : '—'}</div>
+    </div>
+    <div class="metric c-blue metric-clickable" onclick="openModalMinH()">
+      <span class="m-icon">🕐</span>
+      <div class="m-label">Menor espera</div>
+      <div class="m-val">${minH.toFixed(1)}h</div>
+      <div class="m-sub">${Math.floor(minH/24)}d ${(minH%24).toFixed(1)}h &nbsp;·&nbsp; ${rMinH ? rMinH.cliente || rMinH.filial : '—'}</div>
+    </div>
+    <div class="metric c-gold metric-clickable" onclick="openModalMaxH()">
+      <span class="m-icon">🕙</span>
+      <div class="m-label">Maior espera</div>
+      <div class="m-val">${maxH.toFixed(1)}h</div>
+      <div class="m-sub">${Math.floor(maxH/24)}d ${(maxH%24).toFixed(1)}h &nbsp;·&nbsp; ${rMaxH ? rMaxH.cliente || rMaxH.filial : '—'}</div>
+    </div>
+    <div class="metric c-purple" style="cursor:default">
+      <span class="m-icon">⏱️</span>
+      <div class="m-label">Média de espera</div>
+      <div class="m-val">${avgH.toFixed(1)}h</div>
+      <div class="m-sub">${Math.floor(avgH/24)}d ${(avgH%24).toFixed(1)}h &nbsp;·&nbsp; por ocorrência</div>
+    </div>
   `;
+}
+
+function openModalAg() {
+  const rows = filteredData.filter(r => r.status.includes('APROV'));
+  const total = rows.reduce((s, r) => s + r.valor, 0);
+  openModal('⏳ Ag. Aprovação — Detalhes', rows, [
+    { label: 'Registros', val: rows.length },
+    { label: 'Total R$',  val: fS(total) },
+    { label: 'Ticket médio', val: fS(rows.length ? total / rows.length : 0) }
+  ]);
+}
+
+function openModalRej() {
+  const rows = filteredData.filter(r => r.status.includes('REJEIT'));
+  const total = rows.reduce((s, r) => s + r.valor, 0);
+  openModal('❌ Rejeitados — Detalhes', rows, [
+    { label: 'Registros', val: rows.length },
+    { label: 'Total R$',  val: fS(total) },
+    { label: 'Ticket médio', val: fS(rows.length ? total / rows.length : 0) }
+  ]);
+}
+
+function openModalMin() {
+  const vals = filteredData.map(r => r.valor).filter(v => v > 0);
+  const minV = vals.length ? Math.min(...vals) : 0;
+  const row  = filteredData.find(r => r.valor === minV);
+  openModal('🔽 Menor Diária — Detalhes', row ? [row] : [], [
+    { label: 'Valor',    val: fS(minV) },
+    { label: 'Cliente',  val: row ? row.cliente || '—' : '—' },
+    { label: 'Filial',   val: row ? row.filial  || '—' : '—' },
+    { label: 'Ocorrência', val: row ? row.ocorrencia || '—' : '—' }
+  ]);
+}
+
+function openModalMax() {
+  const vals = filteredData.map(r => r.valor).filter(v => v > 0);
+  const maxV = vals.length ? Math.max(...vals) : 0;
+  const row  = filteredData.find(r => r.valor === maxV);
+  openModal('🔼 Maior Diária — Detalhes', row ? [row] : [], [
+    { label: 'Valor',    val: fS(maxV) },
+    { label: 'Cliente',  val: row ? row.cliente || '—' : '—' },
+    { label: 'Filial',   val: row ? row.filial  || '—' : '—' },
+    { label: 'Ocorrência', val: row ? row.ocorrencia || '—' : '—' }
+  ]);
+}
+
+function openModalMinH() {
+  const hs   = filteredData.map(r => r.horas).filter(h => h > 0 && h < 8760);
+  const minH = hs.length ? Math.min(...hs) : 0;
+  const row  = filteredData.find(r => r.horas === minH);
+  openModal('🕐 Menor Espera — Detalhes', row ? [row] : [], [
+    { label: 'Horas',      val: minH.toFixed(1) + 'h' },
+    { label: 'Cliente',    val: row ? row.cliente    || '—' : '—' },
+    { label: 'Filial',     val: row ? row.filial     || '—' : '—' },
+    { label: 'Ocorrência', val: row ? row.ocorrencia || '—' : '—' }
+  ]);
+}
+
+function openModalMaxH() {
+  const hs   = filteredData.map(r => r.horas).filter(h => h > 0 && h < 8760);
+  const maxH = hs.length ? Math.max(...hs) : 0;
+  const row  = filteredData.find(r => r.horas === maxH);
+  openModal('🕙 Maior Espera — Detalhes', row ? [row] : [], [
+    { label: 'Horas',      val: maxH.toFixed(1) + 'h' },
+    { label: 'Cliente',    val: row ? row.cliente    || '—' : '—' },
+    { label: 'Filial',     val: row ? row.filial     || '—' : '—' },
+    { label: 'Ocorrência', val: row ? row.ocorrencia || '—' : '—' }
+  ]);
 }
 
 // ── MODAL ──
