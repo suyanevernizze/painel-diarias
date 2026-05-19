@@ -888,6 +888,15 @@ function renderMetrics() {
   const rMinH = d.find(r => r.horas === minH);
   const rMaxH = d.find(r => r.horas === maxH);
 
+  // Contratos
+  const frotaRows   = d.filter(r => r.contrato.includes('FROTA'));
+  const agregRows   = d.filter(r => r.contrato.includes('AGREGADO'));
+  const tercRows    = d.filter(r => r.contrato.includes('TERCEIRO'));
+  const frotaTotal  = frotaRows.reduce((s, r) => s + r.valor, 0);
+  const agregTotal  = agregRows.reduce((s, r) => s + r.valor, 0);
+  const tercTotal   = tercRows.reduce((s, r)  => s + r.valor, 0);
+  const pct = v => total ? Math.round(v / total * 100) : 0;
+
   document.getElementById('metrics').innerHTML = `
     <div class="metric" style="cursor:default">
       <span class="m-icon">💰</span>
@@ -934,20 +943,38 @@ function renderMetrics() {
     <div class="metric c-blue metric-clickable" onclick="openModalMinH()">
       <span class="m-icon">🕐</span>
       <div class="m-label">Menor espera</div>
-      <div class="m-val">${minH.toFixed(1)}h</div>
-      <div class="m-sub">${Math.floor(minH/24)}d ${(minH%24).toFixed(1)}h &nbsp;·&nbsp; ${rMinH ? rMinH.cliente || rMinH.filial : '—'}</div>
+      <div class="m-val">${minH.toFixed(1)}h <span style="font-size:13px;font-weight:400;color:var(--tx2)">${Math.floor(minH/24)}d ${(minH%24).toFixed(1)}h</span></div>
+      <div class="m-sub">${rMinH ? rMinH.cliente || rMinH.filial : '—'}</div>
     </div>
     <div class="metric c-gold metric-clickable" onclick="openModalMaxH()">
       <span class="m-icon">🕙</span>
       <div class="m-label">Maior espera</div>
-      <div class="m-val">${maxH.toFixed(1)}h</div>
-      <div class="m-sub">${Math.floor(maxH/24)}d ${(maxH%24).toFixed(1)}h &nbsp;·&nbsp; ${rMaxH ? rMaxH.cliente || rMaxH.filial : '—'}</div>
+      <div class="m-val">${maxH.toFixed(1)}h <span style="font-size:13px;font-weight:400;color:var(--tx2)">${Math.floor(maxH/24)}d ${(maxH%24).toFixed(1)}h</span></div>
+      <div class="m-sub">${rMaxH ? rMaxH.cliente || rMaxH.filial : '—'}</div>
     </div>
     <div class="metric c-purple" style="cursor:default">
       <span class="m-icon">⏱️</span>
       <div class="m-label">Média de espera</div>
-      <div class="m-val">${avgH.toFixed(1)}h</div>
-      <div class="m-sub">${Math.floor(avgH/24)}d ${(avgH%24).toFixed(1)}h &nbsp;·&nbsp; por ocorrência</div>
+      <div class="m-val">${avgH.toFixed(1)}h <span style="font-size:13px;font-weight:400;color:var(--tx2)">${Math.floor(avgH/24)}d ${(avgH%24).toFixed(1)}h</span></div>
+      <div class="m-sub">por ocorrência</div>
+    </div>
+    <div class="metric metric-clickable" style="border-top:3px solid #378ADD" onclick="openModalContrato('FROTA')">
+      <span class="m-icon">🚛</span>
+      <div class="m-label">Frota</div>
+      <div class="m-val">${fS(frotaTotal)}</div>
+      <div class="m-sub">${pct(frotaTotal)}% do total &nbsp;·&nbsp; ${frotaRows.length} registros</div>
+    </div>
+    <div class="metric metric-clickable" style="border-top:3px solid #8b7cf6" onclick="openModalContrato('AGREGADO')">
+      <span class="m-icon">🤝</span>
+      <div class="m-label">Agregado</div>
+      <div class="m-val">${fS(agregTotal)}</div>
+      <div class="m-sub">${pct(agregTotal)}% do total &nbsp;·&nbsp; ${agregRows.length} registros</div>
+    </div>
+    <div class="metric metric-clickable" style="border-top:3px solid #1D9E75" onclick="openModalContrato('TERCEIRO')">
+      <span class="m-icon">📦</span>
+      <div class="m-label">Terceiro</div>
+      <div class="m-val">${fS(tercTotal)}</div>
+      <div class="m-sub">${pct(tercTotal)}% do total &nbsp;·&nbsp; ${tercRows.length} registros</div>
     </div>
   `;
 }
@@ -993,6 +1020,23 @@ function openModalMax() {
     { label: 'Cliente',  val: row ? row.cliente || '—' : '—' },
     { label: 'Filial',   val: row ? row.filial  || '—' : '—' },
     { label: 'Ocorrência', val: row ? row.ocorrencia || '—' : '—' }
+  ]);
+}
+
+function openModalContrato(contrato) {
+  const icons = { FROTA: '🚛', AGREGADO: '🤝', TERCEIRO: '📦' };
+  const rows  = filteredData.filter(r => r.contrato.includes(contrato));
+  const total = rows.reduce((s, r) => s + r.valor, 0);
+  const fat   = rows.filter(r => r.status.includes('FATURAD')).reduce((s, r) => s + r.valor, 0);
+  const ag    = rows.filter(r => r.status.includes('APROV')).reduce((s, r) => s + r.valor, 0);
+  const rej   = rows.filter(r => r.status.includes('REJEIT')).reduce((s, r) => s + r.valor, 0);
+  openModal(`${icons[contrato]||'📋'} ${contrato} — Detalhes`, rows, [
+    { label: 'Registros',    val: rows.length },
+    { label: 'Total R$',     val: fS(total) },
+    { label: 'Faturado',     val: fS(fat) },
+    { label: 'Ag. Aprovação',val: fS(ag) },
+    { label: 'Rejeitado',    val: fS(rej) },
+    { label: 'Ticket médio', val: fS(rows.length ? total / rows.length : 0) },
   ]);
 }
 
