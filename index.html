@@ -130,10 +130,10 @@ select::placeholder, input::placeholder { color: var(--tx3); }
 .btn-reset:hover { background: var(--sf2); color: var(--tx); border-color: var(--bd3); }
 
 /* METRICS */
-.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+.metrics { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-bottom: 1.5rem; }
 .metric {
   background: var(--sf); border: 1px solid var(--bd); border-radius: var(--rl);
-  padding: 1.1rem 1.3rem; position: relative; overflow: hidden; transition: all .2s; cursor: default;
+  padding: 1.1rem 1.2rem; position: relative; overflow: hidden; transition: all .2s; cursor: default; min-width: 0;
 }
 .metric:hover { border-color: var(--bd3); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
 .metric::before {
@@ -146,10 +146,10 @@ select::placeholder, input::placeholder { color: var(--tx3); }
 .metric.c-teal::before { background: var(--teal); }
 .metric.c-purple::before { background: var(--purple); }
 .metric.c-red::before { background: var(--red); }
-.m-icon { font-size: 20px; margin-bottom: 6px; display: block; }
-.m-label { font-size: 10px; font-weight: 700; color: var(--tx3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
-.m-val { font-size: 21px; font-weight: 700; color: var(--tx); letter-spacing: -.03em; line-height: 1.15; }
-.m-sub { font-size: 11px; color: var(--tx3); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-icon { font-size: 20px; margin-bottom: 5px; display: block; }
+.m-label { font-size: 12px; font-weight: 700; color: var(--tx3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
+.m-val { font-size: 22px; font-weight: 700; color: var(--tx); letter-spacing: -.02em; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-sub { font-size: 12px; color: var(--tx3); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* CARDS */
 .card { background: var(--sf); border: 1px solid var(--bd); border-radius: var(--rl); padding: 1.25rem 1.5rem; }
@@ -287,11 +287,12 @@ footer {
   color: var(--tx4); border-top: 1px solid var(--bd); margin-top: 2rem;
 }
 
-@media (max-width: 1000px) { .g2, .g3 { grid-template-columns: 1fr; } }
+@media (max-width: 1200px) { .metrics { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 1000px) { .g2, .g3 { grid-template-columns: 1fr; } .metrics { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 600px) {
   .main { padding: 1rem; }
   header { padding: 0 1rem; }
-  .metrics { grid-template-columns: 1fr 1fr; }
+  .metrics { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* METRIC CLICKABLE */
@@ -381,6 +382,10 @@ footer {
       <div class="cg">
         <label>Cliente</label>
         <select id="selCliente" onchange="applyFilters()"><option value="">Todos</option></select>
+      </div>
+      <div class="cg">
+        <label>Cidade</label>
+        <select id="selCidade" onchange="applyFilters()"><option value="">Todas</option></select>
       </div>
       <div class="cg">
         <label>Placa</label>
@@ -500,42 +505,12 @@ footer {
       </div>
     </div>
 
-    <!-- NOVO REGISTRO -->
-    <div class="slabel">Novo registro</div>
-    <div class="add-section">
-      <div class="add-form">
-        <div class="cg"><label>Filial</label><input id="iFilial" placeholder="ex: Lages"></div>
-        <div class="cg"><label>Cliente</label><input id="iCliente" placeholder="ex: Klabin"></div>
-        <div class="cg"><label>Placa</label><input id="iPlaca" placeholder="ABC1234" style="width:100px"></div>
-        <div class="cg"><label>CTe</label><input id="iCte" placeholder="nº CTe" style="width:100px"></div>
-        <div class="cg"><label>NF</label><input id="iNf" placeholder="nº NF" style="width:100px"></div>
-        <div class="cg">
-          <label>Contrato</label>
-          <select id="iContrato">
-            <option>FROTA</option>
-            <option>AGREGADO</option>
-            <option>TERCEIRO</option>
-          </select>
-        </div>
-        <div class="cg">
-          <label>Ocorrência</label>
-          <select id="iOcorrencia">
-            <option>DESCARGA</option>
-            <option>CARREGAMENTO</option>
-            <option>KM EXTRA</option>
-          </select>
-        </div>
-        <div class="cg"><label>Total R$</label><input id="iValor" type="number" placeholder="0.00" style="width:105px"></div>
-        <div class="cg"><label>Horas</label><input id="iHoras" type="number" placeholder="0.0" style="width:80px"></div>
-        <div class="cg">
-          <label>Status</label>
-          <select id="iStatus">
-            <option>FATURADA</option>
-            <option>AG. APROVAÇÃO</option>
-            <option>REJEITADA</option>
-          </select>
-        </div>
-        <button class="btn-add" onclick="addRow()">+ Adicionar</button>
+    <!-- GRÁFICO POR REGIÃO -->
+    <div class="slabel">Por Região (UF)</div>
+    <div class="card" style="margin-bottom:1.25rem">
+      <div class="card-title">Total R$ por Estado de Entrega</div>
+      <div class="chart-clickable" style="position:relative;height:260px">
+        <canvas id="cRegiao"></canvas>
       </div>
     </div>
 
@@ -564,7 +539,6 @@ footer {
               <th onclick="srt('horas')">Horas</th>
               <th onclick="srt('valor')">Total R$</th>
               <th onclick="srt('status')">Status</th>
-              <th></th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -592,11 +566,20 @@ const fR = v => (Number(v) || 0).toLocaleString('pt-BR', {
   minimumFractionDigits: 2, maximumFractionDigits: 2
 });
 
-// Formata valor em BRL completo (igual fR, sem abreviação K/M)
+// Formata valor em BRL completo (para tabelas e modais)
 const fS = v => (Number(v) || 0).toLocaleString('pt-BR', {
   style: 'currency', currency: 'BRL',
   minimumFractionDigits: 2, maximumFractionDigits: 2
 });
+
+// Formata valor abreviado para indicadores (ex: R$ 1,2M · R$ 25,4K)
+const fA = v => {
+  const n = Number(v) || 0;
+  if (n >= 1e9) return 'R$ ' + (n/1e9).toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1}) + 'B';
+  if (n >= 1e6) return 'R$ ' + (n/1e6).toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1}) + 'M';
+  if (n >= 1e3) return 'R$ ' + (n/1e3).toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1}) + 'K';
+  return fS(n);
+};
 
 function toDate(v) {
   if (!v) return null;
@@ -704,6 +687,8 @@ function processFile(file) {
         const cte        = String(row['CT-e Origem']       || '').trim();
         const nf         = String(row['Nº NF']             || '').trim();
         const ste        = String(row['STE']               || '').trim();
+        const cidade     = String(row['Cidade Entrega']    || '').trim().toUpperCase();
+        const uf         = String(row['UF']                || '').trim().toUpperCase();
         const dataT      = row['Data Transporte'] || row['Data Hora Chegada'] || '';
 
         // TOTAL R$ — com raw:true vem como número diretamente
@@ -721,7 +706,7 @@ function processFile(file) {
         if (!filial && !cliente && !valor) return;
         if (filial === 'FILIAL' || cliente === 'CLIENTE KLABIN') return; // linha cabeçalho duplicado
 
-        data.push({ filial, cliente, contrato, ocorrencia, status, placa, cte, nf, ste, horas, valor, data: dataT });
+        data.push({ filial, cliente, contrato, ocorrencia, status, placa, cte, nf, ste, cidade, uf, horas, valor, data: dataT });
       });
 
       if (!data.length) {
@@ -758,7 +743,7 @@ function processFile(file) {
 
 // ── FILTERS ──
 function populateFilters() {
-  const fs = { selFilial: 'filial', selContrato: 'contrato', selOcorrencia: 'ocorrencia', selStatus: 'status', selCliente: 'cliente' };
+  const fs = { selFilial: 'filial', selContrato: 'contrato', selOcorrencia: 'ocorrencia', selStatus: 'status', selCliente: 'cliente', selCidade: 'cidade' };
   Object.entries(fs).forEach(([id, field]) => {
     const sel = document.getElementById(id), cur = sel.value;
     while (sel.options.length > 1) sel.remove(1);
@@ -790,8 +775,9 @@ function applyFilters() {
   const c     = document.getElementById('selContrato').value;
   const o     = document.getElementById('selOcorrencia').value;
   const s     = document.getElementById('selStatus').value;
-  const cl    = document.getElementById('selCliente').value;
-  const q     = document.getElementById('tableSearch').value.toLowerCase();
+  const cl     = document.getElementById('selCliente').value;
+  const cidade = document.getElementById('selCidade').value;
+  const q      = document.getElementById('tableSearch').value.toLowerCase();
   const placa = document.getElementById('selPlaca').value.toUpperCase().trim();
   const cte   = document.getElementById('selCte').value.trim();
   const nf    = document.getElementById('selNf').value.trim();
@@ -806,7 +792,8 @@ function applyFilters() {
     if (c     && r.contrato   !== c)  return false;
     if (o     && r.ocorrencia !== o)  return false;
     if (s     && r.status     !== s)  return false;
-    if (cl    && r.cliente    !== cl) return false;
+    if (cl     && r.cliente    !== cl)     return false;
+    if (cidade && r.cidade     !== cidade) return false;
     if (placa && !r.placa.includes(placa)) return false;
     if (cte   && !r.cte.includes(cte))     return false;
     if (nf    && !r.nf.includes(nf))       return false;
@@ -827,7 +814,7 @@ function applyFilters() {
 }
 
 function resetFilters() {
-  ['selFilial','selContrato','selOcorrencia','selStatus','selCliente','selPeriodo'].forEach(id => document.getElementById(id).value = '');
+  ['selFilial','selContrato','selOcorrencia','selStatus','selCliente','selCidade','selPeriodo'].forEach(id => document.getElementById(id).value = '');
   ['selPlaca','selCte','selNf','selSte','tableSearch'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('selDtI').value = '';
   document.getElementById('selDtF').value = '';
@@ -898,7 +885,7 @@ function renderMetrics() {
   const pct = v => total ? Math.round(v / total * 100) : 0;
 
   document.getElementById('metrics').innerHTML = `
-    <div class="metric" style="cursor:default">
+    <div class="metric metric-clickable" onclick="openModalTotal()">
       <span class="m-icon">💰</span>
       <div class="m-label">Total geral</div>
       <div class="m-val">${fS(total)}</div>
@@ -943,19 +930,19 @@ function renderMetrics() {
     <div class="metric c-blue metric-clickable" onclick="openModalMinH()">
       <span class="m-icon">🕐</span>
       <div class="m-label">Menor espera</div>
-      <div class="m-val">${minH.toFixed(1)}h <span style="font-size:13px;font-weight:400;color:var(--tx2)">${Math.floor(minH/24)}d ${(minH%24).toFixed(1)}h</span></div>
+      <div class="m-val">${minH.toFixed(1)}h <span style="font-size:12px;font-weight:400;color:var(--tx2)">${Math.floor(minH/24)}d ${(minH%24).toFixed(1)}h</span></div>
       <div class="m-sub">${rMinH ? rMinH.cliente || rMinH.filial : '—'}</div>
     </div>
     <div class="metric c-gold metric-clickable" onclick="openModalMaxH()">
       <span class="m-icon">🕙</span>
       <div class="m-label">Maior espera</div>
-      <div class="m-val">${maxH.toFixed(1)}h <span style="font-size:13px;font-weight:400;color:var(--tx2)">${Math.floor(maxH/24)}d ${(maxH%24).toFixed(1)}h</span></div>
+      <div class="m-val">${maxH.toFixed(1)}h <span style="font-size:12px;font-weight:400;color:var(--tx2)">${Math.floor(maxH/24)}d ${(maxH%24).toFixed(1)}h</span></div>
       <div class="m-sub">${rMaxH ? rMaxH.cliente || rMaxH.filial : '—'}</div>
     </div>
     <div class="metric c-purple" style="cursor:default">
       <span class="m-icon">⏱️</span>
       <div class="m-label">Média de espera</div>
-      <div class="m-val">${avgH.toFixed(1)}h <span style="font-size:13px;font-weight:400;color:var(--tx2)">${Math.floor(avgH/24)}d ${(avgH%24).toFixed(1)}h</span></div>
+      <div class="m-val">${avgH.toFixed(1)}h <span style="font-size:12px;font-weight:400;color:var(--tx2)">${Math.floor(avgH/24)}d ${(avgH%24).toFixed(1)}h</span></div>
       <div class="m-sub">por ocorrência</div>
     </div>
     <div class="metric metric-clickable" style="border-top:3px solid #378ADD" onclick="openModalContrato('FROTA')">
@@ -975,6 +962,79 @@ function renderMetrics() {
       <div class="m-label">Terceiro</div>
       <div class="m-val">${fS(tercTotal)}</div>
       <div class="m-sub">${pct(tercTotal)}% do total &nbsp;·&nbsp; ${tercRows.length} registros</div>
+    </div>
+    ${renderFilialRankingCard(d)}
+  `;
+}
+
+function renderFilialRankingCard(d) {
+  const map = {};
+  d.forEach(r => { if (r.filial) { map[r.filial] = (map[r.filial]||0) + r.valor; } });
+  const sorted = Object.entries(map).sort((a,b) => b[1]-a[1]);
+  const [topFilial, topVal] = sorted[0] || ['—', 0];
+  const total = d.reduce((s,r)=>s+r.valor,0);
+  return `<div class="metric metric-clickable" style="border-top:3px solid #4caf60" onclick="openModalFilialRanking()">
+    <span class="m-icon">🏆</span>
+    <div class="m-label">Filial líder</div>
+    <div class="m-val" style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🥇 ${topFilial}</div>
+    <div class="m-sub">${fS(topVal)} &nbsp;·&nbsp; ${total?Math.round(topVal/total*100):0}% do total &nbsp;·&nbsp; ${sorted.length} filiais</div>
+  </div>`;
+}
+
+function openModalRegiao() {
+  const map = {};
+  filteredData.forEach(r => { if (r.uf) { map[r.uf] = (map[r.uf]||{total:0,n:0}); map[r.uf].total+=r.valor; map[r.uf].n++; } });
+  const total = filteredData.reduce((s,r)=>s+r.valor,0);
+  const sorted = Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
+  const metricas = sorted.slice(0,3).map(([uf,v])=>({ label: uf, val: fS(v.total) }));
+  // Monta linhas para modal usando rows fictícias por UF
+  const rows = sorted.map(([uf,v]) => ({
+    filial: uf, cliente: v.n+' registros', contrato: '', ocorrencia: '',
+    status: `${total?Math.round(v.total/total*100):0}%`, placa: '', cte: '', nf: '', ste: '',
+    horas: 0, valor: v.total, data: '', cidade: '', uf
+  }));
+  openModal('🗺️ Por Região (UF)', rows, metricas);
+}
+
+function openModalFilialRanking() {
+  const map = {};
+  filteredData.forEach(r => { if (r.filial) { map[r.filial]=(map[r.filial]||{total:0,n:0}); map[r.filial].total+=r.valor; map[r.filial].n++; } });
+  const total = filteredData.reduce((s,r)=>s+r.valor,0);
+  const sorted = Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
+  const medals = ['🥇','🥈','🥉'];
+  const metricas = sorted.slice(0,3).map(([f,v],i)=>({ label: medals[i]+' '+f, val: fS(v.total) }));
+  const rows = sorted.map(([filial,v]) => ({
+    filial, cliente: v.n+' registros', contrato: '', ocorrencia: '',
+    status: `${total?Math.round(v.total/total*100):0}%`, placa: '', cte: '', nf: '', ste: '',
+    horas: 0, valor: v.total, data: '', cidade: '', uf: ''
+  }));
+  openModal('🏆 Ranking de Filiais', rows, metricas);
+}
+
+function openModalTotal() {
+  const d = filteredData;
+  const total = d.reduce((s,r) => s+r.valor, 0);
+  const fat   = d.filter(r => r.status.includes('FATURAD')).reduce((s,r) => s+r.valor, 0);
+  const ag    = d.filter(r => r.status.includes('APROV')).reduce((s,r) => s+r.valor, 0);
+  const rej   = d.filter(r => r.status.includes('REJEIT')).reduce((s,r) => s+r.valor, 0);
+  const avgV  = d.length ? total / d.length : 0;
+  const pct   = total ? Math.round(fat/total*100) : 0;
+
+  // Passa uma métrica dummy para forçar o bloco a aparecer, depois substitui
+  openModal('💰 Total Geral — Detalhes', d, [{ label: ' ', val: ' ' }]);
+
+  const mm = document.getElementById('modalMetrics');
+  mm.style.display = 'block';
+  mm.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px">
+      <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(total)}</div></div>
+      <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${d.length.toLocaleString('pt-BR')}</div></div>
+      <div class="modal-metric"><div class="mm-label">Faturado</div><div class="mm-val">${fS(fat)}</div><div class="mm-sub">${pct}% do total</div></div>
+      <div class="modal-metric"><div class="mm-label">Ag. Aprovação</div><div class="mm-val">${fS(ag)}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:10px">
+      <div class="modal-metric"><div class="mm-label">Rejeitado</div><div class="mm-val">${fS(rej)}</div></div>
+      <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(avgV)}</div></div>
     </div>
   `;
 }
@@ -1270,6 +1330,37 @@ function renderCharts() {
   const stC = stK.map(k => k.includes('FATURAD') ? '#2e9e44' : k.includes('APROV') ? '#f0b429' : '#ef4444');
   document.getElementById('lgStatus').innerHTML = stK.map((k, i) => `<span><span class="ld" style="background:${stC[i]}"></span>${k}</span>`).join('');
   mkDonut('cStatus', stK, stV, stC, 'status');
+
+  // ── Por Região (UF) ──
+  const bUF = {};
+  d.forEach(r => { const k = (r.uf || '').trim(); if (k) bUF[k] = (bUF[k] || 0) + r.valor; });
+  const ufK = Object.keys(bUF).sort((a,b) => bUF[b]-bUF[a]);
+  const ufV = ufK.map(k => bUF[k]);
+  const ufColors = ['#4caf60','#f0b429','#378ADD','#8b7cf6','#1D9E75','#ef4444','#f59e0b','#06b6d4','#a78bfa','#34d399'];
+  dc('cRegiao');
+  if (document.getElementById('cRegiao')) {
+    document.getElementById('cRegiao').parentElement.style.height = Math.max(ufK.length * 28 + 60, 160) + 'px';
+    CH['cRegiao'] = new Chart(document.getElementById('cRegiao'), {
+      type: 'bar',
+      data: {
+        labels: ufK,
+        datasets: [{ data: ufV, backgroundColor: ufK.map((_,i) => ufColors[i % ufColors.length]), borderRadius: 5, borderSkipped: false }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ' ' + fS(ctx.raw) } }
+        },
+        scales: {
+          x: { ticks: { color: '#4d7a58', callback: v => 'R$' + (v/1000).toFixed(0)+'k' }, grid: { color: '#1d2f20' } },
+          y: { ticks: { color: '#7aaa86' }, grid: { display: false } }
+        },
+        onClick: (e, els) => { if (els.length) { document.getElementById('selCidade').value=''; applyFilters(); } }
+      }
+    });
+  }
 }
 
 // ── TABLE ──
@@ -1281,7 +1372,7 @@ function renderTable() {
     const ri = allData.indexOf(r), s = r.status || '';
     const badge = s.includes('FATURAD') ? 'bf' : s.includes('APROV') ? 'ba' : 'br';
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${r.filial||'—'}</td><td>${r.cliente||'—'}</td><td>${r.placa||'—'}</td><td>${r.cte||'—'}</td><td>${r.nf||'—'}</td><td>${r.ste||'—'}</td><td>${r.contrato||'—'}</td><td>${r.ocorrencia||'—'}</td><td class="vc">${(r.horas||0).toFixed(1)}h</td><td class="vc">${fR(r.valor)}</td><td><span class="badge ${badge}">${s||'—'}</span></td><td><button class="btn-del" onclick="delRow(${ri})">✕</button></td>`;
+    tr.innerHTML = `<td>${r.filial||'—'}</td><td>${r.cliente||'—'}</td><td>${r.placa||'—'}</td><td>${r.cte||'—'}</td><td>${r.nf||'—'}</td><td>${r.ste||'—'}</td><td>${r.contrato||'—'}</td><td>${r.ocorrencia||'—'}</td><td class="vc">${(r.horas||0).toFixed(1)}h</td><td class="vc">${fR(r.valor)}</td><td><span class="badge ${badge}">${s||'—'}</span></td>`;
     tb.appendChild(tr);
   });
   const pg = document.getElementById('pagination');
@@ -1300,32 +1391,6 @@ function renderTable() {
 function goPage(p) { currentPage = Math.max(1, Math.min(p, Math.ceil(filteredData.length / PS))); renderTable(); }
 
 // ── ADD / DELETE ──
-function addRow() {
-  const f = document.getElementById('iFilial').value.trim();
-  const c = document.getElementById('iCliente').value.trim();
-  const v = parseFloat(document.getElementById('iValor').value) || 0;
-  if (!f || !c || !v) { alert('Preencha ao menos Filial, Cliente e Total R$.'); return; }
-  allData.push({
-    filial:     f, cliente: c,
-    placa:      document.getElementById('iPlaca').value.trim().toUpperCase(),
-    cte:        document.getElementById('iCte').value.trim(),
-    nf:         document.getElementById('iNf').value.trim(),
-    contrato:   document.getElementById('iContrato').value,
-    ocorrencia: document.getElementById('iOcorrencia').value,
-    horas:      parseFloat(document.getElementById('iHoras').value) || 0,
-    valor:      v,
-    status:     document.getElementById('iStatus').value,
-    data:       new Date()
-  });
-  ['iFilial','iCliente','iPlaca','iCte','iNf','iValor','iHoras'].forEach(id => document.getElementById(id).value = '');
-  populateFilters(); applyFilters();
-}
-
-function delRow(i) {
-  if (!confirm('Remover este registro?')) return;
-  allData.splice(i, 1); populateFilters(); applyFilters();
-}
-
 // ── EXPORT ──
 function exportCSV() {
   const h    = ['Filial','Cliente','Placa','CTe','NF','STE','Contrato','Ocorrência','Horas','Total R$','Status'];
