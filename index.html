@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Binotto — Painel de Diárias</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --g900: #0a1f0d; --g800: #0f2e14; --g700: #145222; --g600: #1a6b2c; --g500: #1e7d32;
+  --g400: #2e9e44; --g300: #4caf60; --g200: #7dcc8e; --g100: #d4edd9;
+  --bg: #0a1a0d; --sf: #111f14; --sf2: #172619; --sf3: #1d2f20; --sf4: #243828;
+  --bd: #243828; --bd2: #2d4a31; --bd3: #3a6040;
+  --tx: #e2f0e5; --tx2: #7aaa86; --tx3: #4d7a58; --tx4: #2d5238;
+  --acc: #4caf60; --acc2: #2e9e44;
+  --gold: #f0b429; --amber: #f59e0b; --red: #ef4444; --blue: #378ADD; --teal: #1D9E75; --purple: #8b7cf6;
+  --r: 8px; --rl: 14px; --rxl: 20px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tx); min-height: 100vh; font-size: 14px; line-height: 1.5; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--sf); }
+::-webkit-scrollbar-thumb { background: var(--bd3); border-radius: 3px; }
+
+/* HEADER */
+header {
+  background: linear-gradient(180deg, var(--g900) 0%, #081508 100%);
+  border-bottom: 1px solid var(--bd2);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 66px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 2px 30px rgba(0,0,0,.6);
+}
+.logo-wrap { display: flex; align-items: center; gap: 14px; }
+.logo-img { height: 40px; width: auto; filter: brightness(0) invert(1); opacity: .95; }
+.logo-icon {
+  width: 36px; height: 36px; background: var(--acc2);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: #fff; font-family: 'Inter', sans-serif;
+  flex-shrink: 0;
+}
+.logo-name-wrap { display: flex; flex-direction: column; gap: 1px; }
+.logo-text {
+  font-size: 15px; font-weight: 800; color: #ffffff;
+  letter-spacing: .08em; font-family: 'Inter', sans-serif; line-height: 1;
+}
+.logo-dot { color: var(--acc); }
+.logo-div { width: 1px; height: 30px; background: var(--bd2); }
+.logo-sub { font-size: 10px; color: var(--tx3); font-weight: 500; letter-spacing: .1em; text-transform: uppercase; }
+.logo-div { width: 1px; height: 30px; background: var(--bd2); }
+.logo-sub { font-size: 11px; color: var(--tx3); font-weight: 500; letter-spacing: .07em; text-transform: uppercase; }
+.hdr-right { display: flex; align-items: center; gap: 10px; }
+.file-badge {
+  font-size: 11px; color: var(--tx2); font-family: 'DM Mono', monospace;
+  background: var(--sf2); border: 1px solid var(--bd); border-radius: 6px;
+  padding: 4px 10px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.btn-upload {
+  display: flex; align-items: center; gap: 7px; padding: 8px 18px;
+  background: linear-gradient(135deg, var(--g500), var(--g400));
+  color: #fff; border: none; border-radius: var(--r); font-size: 13px;
+  font-family: 'Inter', sans-serif; font-weight: 600; cursor: pointer;
+  transition: all .2s; box-shadow: 0 2px 12px rgba(46,158,68,.3); letter-spacing: .02em;
+}
+.btn-upload:hover { filter: brightness(1.1); box-shadow: 0 4px 20px rgba(46,158,68,.45); transform: translateY(-1px); }
+#fileInput { display: none; }
+
+/* MAIN */
+.main { padding: 1.75rem 2rem; max-width: 1560px; margin: 0 auto; }
+
+/* DROP */
+.drop-zone {
+  border: 2px dashed var(--bd3); border-radius: var(--rxl); padding: 6rem 2rem;
+  text-align: center; background: var(--sf); transition: all .2s; cursor: pointer; margin-bottom: 2rem;
+}
+.drop-zone.drag-over { border-color: var(--acc); background: var(--sf2); }
+.drop-zone.hidden { display: none; }
+.drop-icon {
+  width: 76px; height: 76px; background: var(--sf2); border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.5rem; border: 1px solid var(--bd2);
+}
+.drop-icon svg { width: 36px; height: 36px; stroke: var(--g300); fill: none; stroke-width: 1.5; }
+.drop-title { font-size: 21px; font-weight: 700; margin-bottom: .5rem; letter-spacing: -.03em; }
+.drop-sub { font-size: 14px; color: var(--tx2); }
+.drop-note { font-size: 12px; color: var(--tx3); margin-top: .5rem; }
+
+/* DASHBOARD */
+#dashboard { display: none; }
+#dashboard.visible { display: block; }
+
+/* SECTION LABEL */
+.slabel {
+  font-size: 10px; font-weight: 700; color: var(--tx3); text-transform: uppercase;
+  letter-spacing: .12em; margin-bottom: .75rem; display: flex; align-items: center; gap: 10px;
+}
+.slabel::after { content: ''; flex: 1; height: 1px; background: var(--bd); }
+
+/* CONTROLS */
+.controls {
+  background: var(--sf); border: 1px solid var(--bd); border-radius: var(--rl);
+  padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
+}
+.cg { display: flex; flex-direction: column; gap: 4px; }
+.cg label { font-size: 10px; font-weight: 700; color: var(--tx3); text-transform: uppercase; letter-spacing: .08em; }
+select, input[type=date], input[type=text] {
+  padding: 7px 10px; border-radius: var(--r); border: 1px solid var(--bd2);
+  background: var(--sf2); color: var(--tx); font-family: 'Inter', sans-serif;
+  font-size: 13px; outline: none; min-width: 130px; transition: border-color .15s;
+}
+select:focus, input[type=date]:focus, input[type=text]:focus { border-color: var(--acc); }
+select::placeholder, input::placeholder { color: var(--tx3); }
+.btn-reset {
+  padding: 8px 16px; border-radius: var(--r); border: 1px solid var(--bd2);
+  background: transparent; color: var(--tx2); font-family: 'Inter', sans-serif;
+  font-size: 13px; cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.btn-reset:hover { background: var(--sf2); color: var(--tx); border-color: var(--bd3); }
+
+/* METRICS */
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+.metric {
+  background: var(--sf); border: 1px solid var(--bd); border-radius: var(--rl);
+  padding: 1.1rem 1.3rem; position: relative; overflow: hidden; transition: all .2s; cursor: default;
+}
+.metric:hover { border-color: var(--bd3); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+.metric::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; border-radius: 3px 3px 0 0; background: var(--g400);
+}
+.metric.c-amber::before { background: var(--gold); }
+.metric.c-blue::before { background: var(--blue); }
+.metric.c-gold::before { background: var(--gold); }
+.metric.c-teal::before { background: var(--teal); }
+.metric.c-purple::before { background: var(--purple); }
+.metric.c-red::before { background: var(--red); }
+.m-icon { font-size: 20px; margin-bottom: 6px; display: block; }
+.m-label { font-size: 10px; font-weight: 700; color: var(--tx3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+.m-val { font-size: 21px; font-weight: 700; color: var(--tx); letter-spacing: -.03em; line-height: 1.15; }
+.m-sub { font-size: 11px; color: var(--tx3); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* CARDS */
+.card { background: var(--sf); border: 1px solid var(--bd); border-radius: var(--rl); padding: 1.25rem 1.5rem; }
+.card-title { font-size: 10px; font-weight: 700; color: var(--tx3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .85rem; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; font-size: 11px; color: var(--tx2); }
+.legend span { display: flex; align-items: center; gap: 5px; cursor: pointer; transition: opacity .15s; }
+.legend span:hover { opacity: .7; }
+.ld { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+
+/* MODAL / DRILL-DOWN */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7);
+  z-index: 500; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--sf); border: 1px solid var(--bd2); border-radius: var(--rxl);
+  padding: 2rem; width: 90%; max-width: 860px; max-height: 85vh;
+  overflow-y: auto; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+.modal-close {
+  position: absolute; top: 1rem; right: 1rem; background: var(--sf2);
+  border: 1px solid var(--bd2); border-radius: 6px; color: var(--tx2);
+  cursor: pointer; padding: 4px 10px; font-size: 18px; transition: all .15s;
+}
+.modal-close:hover { background: var(--bd); color: var(--tx); }
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 1.25rem; color: var(--tx); letter-spacing: -.02em; }
+.modal-metrics {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px; margin-bottom: 1.25rem;
+}
+.modal-metric { background: var(--sf2); border: 1px solid var(--bd); border-radius: var(--r); padding: .9rem 1.1rem; }
+.mm-label { font-size: 10px; font-weight: 700; color: var(--tx3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+.mm-val { font-size: 18px; font-weight: 700; color: var(--tx); letter-spacing: -.02em; }
+.mm-sub { font-size: 11px; color: var(--tx3); margin-top: 3px; }
+.modal-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.modal-table th {
+  padding: 8px 12px; text-align: left; font-size: 10px; font-weight: 700;
+  color: var(--tx3); text-transform: uppercase; letter-spacing: .06em;
+  background: var(--sf2); border-bottom: 1px solid var(--bd);
+}
+.modal-table td { padding: 8px 12px; border-bottom: 1px solid var(--bd); color: var(--tx); }
+.modal-table tr:last-child td { border-bottom: none; }
+.modal-table tr:hover td { background: var(--sf2); }
+
+/* TABLE */
+.table-section { background: var(--sf); border: 1px solid var(--bd); border-radius: var(--rl); overflow: hidden; margin-bottom: 1.5rem; }
+.table-hdr {
+  padding: 1rem 1.5rem; border-bottom: 1px solid var(--bd);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; background: var(--sf2);
+}
+.table-title { font-size: 13px; font-weight: 600; color: var(--tx); }
+.table-count {
+  font-size: 11px; color: var(--tx3); font-family: 'DM Mono', monospace;
+  background: var(--sf3); padding: 3px 10px; border-radius: 20px; border: 1px solid var(--bd);
+}
+.table-search {
+  padding: 7px 12px; border-radius: var(--r); border: 1px solid var(--bd2);
+  background: var(--sf3); color: var(--tx); font-family: 'Inter', sans-serif;
+  font-size: 13px; outline: none; width: 240px;
+}
+.table-search::placeholder { color: var(--tx3); }
+.table-search:focus { border-color: var(--acc); }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  padding: 9px 13px; text-align: left; font-size: 10px; font-weight: 700;
+  color: var(--tx3); text-transform: uppercase; letter-spacing: .07em;
+  background: var(--sf2); border-bottom: 1px solid var(--bd);
+  white-space: nowrap; cursor: pointer; user-select: none; transition: color .15s;
+}
+thead th:hover { color: var(--tx); }
+thead th.sa::after { content: ' ↑'; color: var(--acc); }
+thead th.sd::after { content: ' ↓'; color: var(--acc); }
+tbody td { padding: 9px 13px; border-bottom: 1px solid var(--bd); font-size: 13px; white-space: nowrap; color: var(--tx); }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--sf2); }
+.badge { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+.bf { background: rgba(46,158,68,.18); color: #5cc96e; border: 1px solid rgba(46,158,68,.3); }
+.ba { background: rgba(240,180,41,.15); color: var(--gold); border: 1px solid rgba(240,180,41,.3); }
+.br { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+.vc { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--g300); }
+
+/* PAGINATION */
+.pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .75rem 1.5rem; border-top: 1px solid var(--bd);
+  font-size: 12px; color: var(--tx3); flex-wrap: wrap; gap: 8px; background: var(--sf2);
+}
+.pg-btns { display: flex; gap: 4px; }
+.pgb {
+  padding: 5px 11px; border: 1px solid var(--bd2); border-radius: 6px;
+  background: var(--sf3); cursor: pointer; font-size: 12px; color: var(--tx2); transition: all .15s;
+}
+.pgb:hover:not(:disabled) { background: var(--bd); color: var(--tx); }
+.pgb:disabled { opacity: .3; cursor: default; }
+.pgb.active { background: var(--g500); color: #fff; border-color: var(--g500); }
+
+/* ADD */
+.add-section { background: var(--sf); border: 1px solid var(--bd); border-radius: var(--rl); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+.add-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.add-form .cg input, .add-form .cg select {
+  padding: 7px 10px; border-radius: var(--r); border: 1px solid var(--bd2);
+  background: var(--sf2); color: var(--tx); font-family: 'Inter', sans-serif;
+  font-size: 13px; outline: none; min-width: 110px;
+}
+.add-form .cg input:focus { border-color: var(--acc); }
+.btn-add {
+  padding: 8px 20px; background: linear-gradient(135deg, var(--g500), var(--g400));
+  color: #fff; border: none; border-radius: var(--r); font-family: 'Inter', sans-serif;
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s;
+  box-shadow: 0 2px 10px rgba(30,125,50,.3); white-space: nowrap;
+}
+.btn-add:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-del { background: none; border: none; cursor: pointer; color: var(--red); font-size: 13px; padding: 3px 7px; border-radius: 5px; transition: background .15s; }
+.btn-del:hover { background: rgba(239,68,68,.15); }
+
+/* EXPORT */
+.export-bar { display: flex; gap: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.btn-export {
+  display: flex; align-items: center; gap: 7px; padding: 8px 16px;
+  border: 1px solid var(--bd2); border-radius: var(--r); background: var(--sf2);
+  color: var(--tx2); font-family: 'Inter', sans-serif; font-size: 13px;
+  font-weight: 500; cursor: pointer; transition: all .15s;
+}
+.btn-export:hover { background: var(--sf3); color: var(--tx); border-color: var(--acc); }
+.chart-clickable { cursor: pointer; }
+.chart-clickable:hover { opacity: .93; }
+
+footer {
+  text-align: center; padding: 2rem; font-size: 12px;
+  color: var(--tx4); border-top: 1px solid var(--bd); margin-top: 2rem;
+}
+
+@media (max-width: 1000px) { .g2, .g3 { grid-template-columns: 1fr; } }
+@media (max-width: 600px) {
+  .main { padding: 1rem; }
+  header { padding: 0 1rem; }
+  .metrics { grid-template-columns: 1fr 1fr; }
+}
+
+/* METRIC CLICKABLE */
+.metric-clickable { cursor: pointer !important; }
+.metric-clickable:hover { border-color: var(--bd3); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+.metric.c-red::before { background: var(--red); }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    <div class="logo-icon">B</div>
+    <div class="logo-name-wrap">
+      <div class="logo-text">BINOTTO<span class="logo-dot">.</span></div>
+      <div class="logo-sub">Painel de Diárias</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <span class="file-badge" id="fileInfo">Nenhum arquivo carregado</span>
+    <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      Carregar planilha
+    </button>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="loadFile(this)">
+  </div>
+</header>
+
+<!-- MODAL DRILL-DOWN -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalBox">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-metrics" id="modalMetrics"></div>
+    <div class="table-wrap">
+      <table>
+        <thead id="modalThead"></thead>
+        <tbody id="modalTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+
+  <!-- DROP ZONE -->
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <div class="drop-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <polyline points="9 15 12 12 15 15"/>
+      </svg>
+    </div>
+    <div class="drop-title">Arraste sua planilha aqui</div>
+    <div class="drop-sub">ou clique para selecionar o arquivo</div>
+    <div class="drop-note">Suporta .xlsx, .xls e .csv &nbsp;·&nbsp; Colunas detectadas automaticamente</div>
+  </div>
+
+  <div id="dashboard">
+
+    <!-- FILTROS -->
+    <div class="slabel">Filtros</div>
+    <div class="controls">
+      <div class="cg">
+        <label>Filial</label>
+        <select id="selFilial" onchange="applyFilters()"><option value="">Todas</option></select>
+      </div>
+      <div class="cg">
+        <label>Contrato</label>
+        <select id="selContrato" onchange="applyFilters()"><option value="">Todos</option></select>
+      </div>
+      <div class="cg">
+        <label>Ocorrência</label>
+        <select id="selOcorrencia" onchange="applyFilters()"><option value="">Todas</option></select>
+      </div>
+      <div class="cg">
+        <label>Status</label>
+        <select id="selStatus" onchange="applyFilters()"><option value="">Todos</option></select>
+      </div>
+      <div class="cg">
+        <label>Cliente</label>
+        <select id="selCliente" onchange="applyFilters()"><option value="">Todos</option></select>
+      </div>
+      <div class="cg">
+        <label>Placa</label>
+        <input type="text" id="selPlaca" placeholder="ex: ABC1234" oninput="applyFilters()">
+      </div>
+      <div class="cg">
+        <label>CTe</label>
+        <input type="text" id="selCte" placeholder="número CTe" oninput="applyFilters()">
+      </div>
+      <div class="cg">
+        <label>NF</label>
+        <input type="text" id="selNf" placeholder="número NF" oninput="applyFilters()">
+      </div>
+      <div class="cg">
+        <label>STE</label>
+        <input type="text" id="selSte" placeholder="número STE" oninput="applyFilters()">
+      </div>
+      <div class="cg">
+        <label>Data início</label>
+        <input type="date" id="selDtI" onchange="applyFilters()">
+      </div>
+      <div class="cg">
+        <label>Data fim</label>
+        <input type="date" id="selDtF" onchange="applyFilters()">
+      </div>
+      <div class="cg">
+        <label>Período rápido</label>
+        <select id="selPeriodo" onchange="applyQuickPeriod()">
+          <option value="">Personalizado</option>
+          <option value="7">Últimos 7 dias</option>
+          <option value="30">Últimos 30 dias</option>
+          <option value="90">Últimos 90 dias</option>
+          <option value="365">Último ano</option>
+          <option value="thismonth">Mês atual</option>
+          <option value="lastmonth">Mês anterior</option>
+          <option value="thisyear">Ano atual</option>
+        </select>
+      </div>
+      <button class="btn-reset" onclick="resetFilters()">↺ Limpar filtros</button>
+    </div>
+
+    <!-- INDICADORES -->
+    <div class="slabel">Indicadores</div>
+    <div class="metrics" id="metrics"></div>
+
+    <!-- EXPORTAR -->
+    <div class="export-bar">
+      <button class="btn-export" onclick="exportCSV()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+        Exportar CSV
+      </button>
+      <button class="btn-export" onclick="exportXLSX()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        Exportar XLSX
+      </button>
+    </div>
+
+    <!-- LINHA DO TEMPO -->
+    <div class="slabel">Linha do tempo</div>
+    <div class="card" style="margin-bottom:1.25rem">
+      <div class="card-title">
+        Evolução mensal — Total R$ e Quantidade de ocorrências
+        <span style="font-size:10px;color:var(--tx3);font-weight:400">&nbsp;(clique em uma barra para ver detalhes do mês)</span>
+      </div>
+      <div class="chart-clickable" style="position:relative;height:290px">
+        <canvas id="cMensal"></canvas>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW 2 -->
+    <div class="slabel">
+      Distribuição
+      <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx3);margin-left:6px">— clique nos gráficos para detalhar</span>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-title">Top 10 clientes — Total R$</div>
+        <div class="chart-clickable" style="position:relative;height:260px">
+          <canvas id="cCliente"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Por tipo de ocorrência</div>
+        <div class="legend" id="lgOc"></div>
+        <div class="chart-clickable" style="position:relative;height:220px">
+          <canvas id="cOcorrencia"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="g3">
+      <div class="card">
+        <div class="card-title">Por filial</div>
+        <div class="legend" id="lgFilial"></div>
+        <div class="chart-clickable" style="position:relative;height:190px">
+          <canvas id="cFilial"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Por tipo de contrato</div>
+        <div class="legend" id="lgContrato"></div>
+        <div class="chart-clickable" style="position:relative;height:190px">
+          <canvas id="cContrato"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Por status</div>
+        <div class="legend" id="lgStatus"></div>
+        <div class="chart-clickable" style="position:relative;height:190px">
+          <canvas id="cStatus"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOVO REGISTRO -->
+    <div class="slabel">Novo registro</div>
+    <div class="add-section">
+      <div class="add-form">
+        <div class="cg"><label>Filial</label><input id="iFilial" placeholder="ex: Lages"></div>
+        <div class="cg"><label>Cliente</label><input id="iCliente" placeholder="ex: Klabin"></div>
+        <div class="cg"><label>Placa</label><input id="iPlaca" placeholder="ABC1234" style="width:100px"></div>
+        <div class="cg"><label>CTe</label><input id="iCte" placeholder="nº CTe" style="width:100px"></div>
+        <div class="cg"><label>NF</label><input id="iNf" placeholder="nº NF" style="width:100px"></div>
+        <div class="cg">
+          <label>Contrato</label>
+          <select id="iContrato">
+            <option>FROTA</option>
+            <option>AGREGADO</option>
+            <option>TERCEIRO</option>
+          </select>
+        </div>
+        <div class="cg">
+          <label>Ocorrência</label>
+          <select id="iOcorrencia">
+            <option>DESCARGA</option>
+            <option>CARREGAMENTO</option>
+            <option>KM EXTRA</option>
+          </select>
+        </div>
+        <div class="cg"><label>Total R$</label><input id="iValor" type="number" placeholder="0.00" style="width:105px"></div>
+        <div class="cg"><label>Horas</label><input id="iHoras" type="number" placeholder="0.0" style="width:80px"></div>
+        <div class="cg">
+          <label>Status</label>
+          <select id="iStatus">
+            <option>FATURADA</option>
+            <option>AG. APROVAÇÃO</option>
+            <option>REJEITADA</option>
+          </select>
+        </div>
+        <button class="btn-add" onclick="addRow()">+ Adicionar</button>
+      </div>
+    </div>
+
+    <!-- TABELA -->
+    <div class="slabel">Registros</div>
+    <div class="table-section">
+      <div class="table-hdr">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="table-title">Registros</span>
+          <span class="table-count" id="tableCount">0</span>
+        </div>
+        <input class="table-search" id="tableSearch" placeholder="🔍  Buscar cliente, filial, placa, CTe, NF..." oninput="applyFilters()">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="srt('filial')">Filial</th>
+              <th onclick="srt('cliente')">Cliente</th>
+              <th onclick="srt('placa')">Placa</th>
+              <th onclick="srt('cte')">CTe</th>
+              <th onclick="srt('nf')">NF</th>
+              <th onclick="srt('ste')">STE</th>
+              <th onclick="srt('contrato')">Contrato</th>
+              <th onclick="srt('ocorrencia')">Ocorrência</th>
+              <th onclick="srt('horas')">Horas</th>
+              <th onclick="srt('valor')">Total R$</th>
+              <th onclick="srt('status')">Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+  </div><!-- /#dashboard -->
+</main>
+
+<footer>Binotto Transportes &mdash; Painel de Diárias e Adicionais &mdash; Desenvolvido com Claude AI</footer>
+
+<script>
+// ── STATE ──
+let allData = [], filteredData = [], currentPage = 1, sortCol = 'valor', sortDir = 'desc';
+const PS = 50;
+let CH = {};
+const COLORS = ['#2e9e44','#f0b429','#378ADD','#D85A30','#8b7cf6','#1D9E75','#e8843a','#d4537e','#ef4444','#4caf60'];
+
+// ── FORMATTERS ──
+// Formata valor em BRL com centavos: R$ 1.234,56
+const fR = v => (Number(v) || 0).toLocaleString('pt-BR', {
+  style: 'currency', currency: 'BRL',
+  minimumFractionDigits: 2, maximumFractionDigits: 2
+});
+
+// Formata valor em BRL completo (igual fR, sem abreviação K/M)
+const fS = v => (Number(v) || 0).toLocaleString('pt-BR', {
+  style: 'currency', currency: 'BRL',
+  minimumFractionDigits: 2, maximumFractionDigits: 2
+});
+
+function toDate(v) {
+  if (!v) return null;
+  if (v instanceof Date) return isNaN(v) ? null : v;
+  if (typeof v === 'number') return excelSerialToDate(v);
+  const d = new Date(v);
+  return isNaN(d) ? null : d;
+}
+
+// ── DRAG & DROP ──
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) processFile(f);
+});
+function loadFile(i) { if (i.files[0]) processFile(i.files[0]); }
+
+function parseHoras(v) {
+  if (v === '' || v === null || v === undefined) return 0;
+  // Com cellDates:false e raw:true, duração [h]:mm chega como número de dias decimais
+  // Ex: 11.9653 dias = 287.17h
+  if (typeof v === 'number') {
+    const h = v * 24;
+    // Sanidade: horas razoáveis entre 0 e 8760 (1 ano)
+    return (h >= 0 && h <= 8760) ? parseFloat(h.toFixed(2)) : 0;
+  }
+  const s = String(v);
+  const td = s.match(/(\d+)\s+days?\s+(\d+):(\d+)/i);
+  if (td) return parseFloat((parseInt(td[1])*24 + parseInt(td[2]) + parseInt(td[3])/60).toFixed(2));
+  const hms = s.match(/^(\d+):(\d+)/);
+  if (hms) return parseFloat((parseInt(hms[1]) + parseInt(hms[2])/60).toFixed(2));
+  return parseFloat(s.replace(',','.')) || 0;
+}
+
+// Converte serial Excel de data (número) para Date
+// Com cellDates:false, datas chegam como número serial do Excel
+function excelSerialToDate(serial) {
+  if (!serial && serial !== 0) return null;
+  if (typeof serial === 'number') {
+    // Excel serial: dias desde 1899-12-30
+    const ms = (serial - 25569) * 86400 * 1000;
+    const d = new Date(ms);
+    return isNaN(d) ? null : d;
+  }
+  if (typeof serial === 'string') {
+    const d = new Date(serial);
+    return isNaN(d) ? null : d;
+  }
+  return null;
+}
+
+// ── LOAD FILE (usa ArrayBuffer — compatível com Chrome, Edge, Firefox, Safari) ──
+function processFile(file) {
+  const badge = document.getElementById('fileInfo');
+  badge.textContent = '⏳ Carregando ' + file.name + '…';
+
+  const reader = new FileReader();
+
+  reader.onerror = () => {
+    badge.textContent = '❌ Erro ao ler o arquivo';
+    alert('Não foi possível ler o arquivo.\nTente novamente ou use Chrome/Edge.');
+  };
+
+  reader.onload = e => {
+    try {
+      // raw:true preserva números como números (não formata como string)
+      // cellDates:true converte seriais de data em objetos Date
+      const wb = XLSX.read(new Uint8Array(e.target.result), {
+        type: 'array',
+        cellDates: false,
+        cellNF: true,
+        raw: true
+      });
+
+      // Lê TODAS as abas com dados e concatena (BASE DIÁRIAS + Filiais)
+      const sn = wb.SheetNames;
+      const abas = sn.filter(n => !/configura/i.test(n)); // ignora aba de config
+
+      let allRows = [];
+      abas.forEach(abaName => {
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[abaName], { defval: '', raw: true });
+        if (rows.length) allRows = allRows.concat(rows);
+      });
+
+      if (!allRows.length) {
+        badge.textContent = '⚠️ Aba vazia ou não reconhecida';
+        alert('Nenhuma aba com dados encontrada.\nAbas: ' + sn.join(', '));
+        return;
+      }
+
+      const data = [];
+
+      allRows.forEach(row => {
+        // Mapeamento EXATO das colunas da planilha Base_de_Diarias_e_Adicionais.xlsx
+        const filial     = String(row['Filial']            || '').trim().toUpperCase();
+        const cliente    = String(row['Cliente Klabin']    || '').trim().toUpperCase();
+        const contrato   = String(row['Contrato']          || '').trim().toUpperCase();
+        const ocorrencia = String(row['Tipo de Ocorrência']|| '').trim().toUpperCase();
+        const status     = String(row['STATUS DASTE']      || '').trim().toUpperCase();
+        const placa      = String(row['Placa Veículo']     || '').trim().toUpperCase();
+        const cte        = String(row['CT-e Origem']       || '').trim();
+        const nf         = String(row['Nº NF']             || '').trim();
+        const ste        = String(row['STE']               || '').trim();
+        const dataT      = row['Data Transporte'] || row['Data Hora Chegada'] || '';
+
+        // TOTAL R$ — com raw:true vem como número diretamente
+        const valorRaw = row['TOTAL R$'];
+        const valor = typeof valorRaw === 'number'
+          ? valorRaw
+          : parseFloat(String(valorRaw || '0').replace(/\./g,'').replace(',','.')) || 0;
+
+        // Total de Horas — com raw:true vem como fração de dia (ex: 11.96 = 287h)
+        // O Excel armazena duração como número de dias decimais
+        const horasRaw = row['Total de Horas'];
+        const horas = parseHoras(horasRaw);
+
+        // Ignora linhas sem dados úteis (cabeçalhos duplicados, totais, etc.)
+        if (!filial && !cliente && !valor) return;
+        if (filial === 'FILIAL' || cliente === 'CLIENTE KLABIN') return; // linha cabeçalho duplicado
+
+        data.push({ filial, cliente, contrato, ocorrencia, status, placa, cte, nf, ste, horas, valor, data: dataT });
+      });
+
+      if (!data.length) {
+        badge.textContent = '⚠️ Nenhum dado reconhecido';
+        alert(
+          'Nenhuma linha foi reconhecida na aba "' + ms + '".\n\n' +
+          'Colunas esperadas:\n' +
+          '  • Filial\n  • Cliente Klabin\n  • Contrato\n  • Tipo de Ocorrência\n' +
+          '  • STATUS DASTE\n  • Placa Veículo\n  • CT-e Origem\n  • Nº NF\n' +
+          '  • TOTAL R$\n  • Total de Horas\n  • Data Transporte\n\n' +
+          'Colunas encontradas na planilha:\n' +
+          Object.keys(rows[0] || {}).join(', ')
+        );
+        return;
+      }
+
+      badge.textContent = '✅ ' + file.name + ' — ' + data.length + ' registros carregados';
+      allData = data;
+      document.getElementById('dropZone').classList.add('hidden');
+      document.getElementById('dashboard').classList.add('visible');
+      populateFilters();
+      applyFilters();
+
+    } catch (err) {
+      badge.textContent = '❌ Falha ao processar';
+      alert('Erro ao processar a planilha:\n' + err.message);
+      console.error(err);
+    }
+  };
+
+  // ArrayBuffer é o método correto — readAsBinaryString é obsoleto e bloqueado em alguns browsers
+  reader.readAsArrayBuffer(file);
+}
+
+// ── FILTERS ──
+function populateFilters() {
+  const fs = { selFilial: 'filial', selContrato: 'contrato', selOcorrencia: 'ocorrencia', selStatus: 'status', selCliente: 'cliente' };
+  Object.entries(fs).forEach(([id, field]) => {
+    const sel = document.getElementById(id), cur = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    [...new Set(allData.map(r => r[field]).filter(Boolean))].sort().forEach(v => {
+      const o = document.createElement('option');
+      o.value = v; o.text = v; sel.appendChild(o);
+    });
+    sel.value = cur;
+  });
+}
+
+function applyQuickPeriod() {
+  const val = document.getElementById('selPeriodo').value;
+  if (!val) return;
+  const now = new Date();
+  let s, e = new Date(now);
+  if (val === 'thismonth')       { s = new Date(now.getFullYear(), now.getMonth(), 1);     e = new Date(now.getFullYear(), now.getMonth() + 1, 0); }
+  else if (val === 'lastmonth')  { s = new Date(now.getFullYear(), now.getMonth() - 1, 1); e = new Date(now.getFullYear(), now.getMonth(), 0); }
+  else if (val === 'thisyear')   { s = new Date(now.getFullYear(), 0, 1);                  e = new Date(now.getFullYear(), 11, 31); }
+  else { s = new Date(now); s.setDate(s.getDate() - parseInt(val)); }
+  const fmt = d => d.toISOString().slice(0, 10);
+  document.getElementById('selDtI').value = fmt(s);
+  document.getElementById('selDtF').value = fmt(e);
+  applyFilters();
+}
+
+function applyFilters() {
+  const f     = document.getElementById('selFilial').value;
+  const c     = document.getElementById('selContrato').value;
+  const o     = document.getElementById('selOcorrencia').value;
+  const s     = document.getElementById('selStatus').value;
+  const cl    = document.getElementById('selCliente').value;
+  const q     = document.getElementById('tableSearch').value.toLowerCase();
+  const placa = document.getElementById('selPlaca').value.toUpperCase().trim();
+  const cte   = document.getElementById('selCte').value.trim();
+  const nf    = document.getElementById('selNf').value.trim();
+  const ste   = document.getElementById('selSte').value.trim();
+  const di    = document.getElementById('selDtI').value;
+  const df    = document.getElementById('selDtF').value;
+  const dtI   = di ? new Date(di + 'T00:00:00') : null;
+  const dtF   = df ? new Date(df + 'T23:59:59') : null;
+
+  filteredData = allData.filter(r => {
+    if (f     && r.filial     !== f)  return false;
+    if (c     && r.contrato   !== c)  return false;
+    if (o     && r.ocorrencia !== o)  return false;
+    if (s     && r.status     !== s)  return false;
+    if (cl    && r.cliente    !== cl) return false;
+    if (placa && !r.placa.includes(placa)) return false;
+    if (cte   && !r.cte.includes(cte))     return false;
+    if (nf    && !r.nf.includes(nf))       return false;
+    if (ste   && !String(r.ste || '').includes(ste)) return false;
+    if (q) {
+      const hay = `${r.filial} ${r.cliente} ${r.contrato} ${r.placa} ${r.cte} ${r.nf}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    if (dtI || dtF) {
+      const rd = toDate(r.data);
+      if (!rd) return false;
+      if (dtI && rd < dtI) return false;
+      if (dtF && rd > dtF) return false;
+    }
+    return true;
+  });
+  sortData(); currentPage = 1; renderMetrics(); renderCharts(); renderTable();
+}
+
+function resetFilters() {
+  ['selFilial','selContrato','selOcorrencia','selStatus','selCliente','selPeriodo'].forEach(id => document.getElementById(id).value = '');
+  ['selPlaca','selCte','selNf','selSte','tableSearch'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('selDtI').value = '';
+  document.getElementById('selDtF').value = '';
+  applyFilters();
+}
+
+function sortData() {
+  filteredData.sort((a, b) => {
+    let va = a[sortCol] || '', vb = b[sortCol] || '';
+    if (sortCol === 'valor' || sortCol === 'horas') { va = Number(va) || 0; vb = Number(vb) || 0; }
+    else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+    return va < vb ? (sortDir === 'asc' ? -1 : 1) : va > vb ? (sortDir === 'asc' ? 1 : -1) : 0;
+  });
+}
+
+function srt(col) {
+  if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  else { sortCol = col; sortDir = (col === 'valor' || col === 'horas') ? 'desc' : 'asc'; }
+  document.querySelectorAll('thead th').forEach(th => th.classList.remove('sa','sd'));
+  const cols = ['filial','cliente','placa','cte','nf','ste','contrato','ocorrencia','horas','valor','status'];
+  const idx = cols.indexOf(col);
+  if (idx >= 0) {
+    const ths = document.querySelectorAll('thead th');
+    if (ths[idx]) ths[idx].classList.add(sortDir === 'asc' ? 'sa' : 'sd');
+  }
+  sortData(); renderTable();
+}
+
+// ── METRICS ──
+function renderMetrics() {
+  const d = filteredData;
+  if (!d.length) {
+    document.getElementById('metrics').innerHTML = '<div class="metric"><div class="m-label">Sem dados</div></div>';
+    return;
+  }
+  const vals  = d.map(r => r.valor).filter(v => v > 0);
+  const total = vals.reduce((s, v) => s + v, 0);
+  const fat   = d.filter(r => r.status.includes('FATURAD')).reduce((s, r) => s + r.valor, 0);
+
+  const agRows = d.filter(r => r.status.includes('APROV'));
+  const ag     = agRows.reduce((s, r) => s + r.valor, 0);
+
+  const rejRows = d.filter(r => r.status.includes('REJEIT'));
+  const rej     = rejRows.reduce((s, r) => s + r.valor, 0);
+
+  const minV  = vals.length ? Math.min(...vals) : 0;
+  const maxV  = vals.length ? Math.max(...vals) : 0;
+  const avgV  = d.length   ? total / d.length   : 0;
+
+  const rMinV = d.find(r => r.valor === minV);
+  const rMaxV = d.find(r => r.valor === maxV);
+
+  // Horas — filtra apenas valores positivos e razoáveis (< 8760h = 1 ano)
+  const hs   = d.map(r => r.horas).filter(h => h > 0 && h < 8760);
+  const minH = hs.length ? Math.min(...hs) : 0;
+  const maxH = hs.length ? Math.max(...hs) : 0;
+  const avgH = hs.length ? hs.reduce((s, h) => s + h, 0) / hs.length : 0;
+  const rMinH = d.find(r => r.horas === minH);
+  const rMaxH = d.find(r => r.horas === maxH);
+
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric" style="cursor:default">
+      <span class="m-icon">💰</span>
+      <div class="m-label">Total geral</div>
+      <div class="m-val">${fS(total)}</div>
+      <div class="m-sub">${d.length.toLocaleString('pt-BR')} registros</div>
+    </div>
+    <div class="metric" style="cursor:default">
+      <span class="m-icon">✅</span>
+      <div class="m-label">Faturado</div>
+      <div class="m-val">${fS(fat)}</div>
+      <div class="m-sub">${total ? Math.round(fat / total * 100) : 0}% do total</div>
+    </div>
+    <div class="metric c-amber metric-clickable" onclick="openModalAg()">
+      <span class="m-icon">⏳</span>
+      <div class="m-label">Ag. aprovação</div>
+      <div class="m-val">${fS(ag)}</div>
+      <div class="m-sub">${agRows.length} pendentes</div>
+    </div>
+    <div class="metric c-red metric-clickable" onclick="openModalRej()">
+      <span class="m-icon">❌</span>
+      <div class="m-label">Rejeitado</div>
+      <div class="m-val">${fS(rej)}</div>
+      <div class="m-sub">${rejRows.length} registros</div>
+    </div>
+    <div class="metric c-teal" style="cursor:default">
+      <span class="m-icon">📊</span>
+      <div class="m-label">Ticket médio</div>
+      <div class="m-val">${fS(avgV)}</div>
+      <div class="m-sub">por ocorrência</div>
+    </div>
+    <div class="metric c-blue metric-clickable" onclick="openModalMin()">
+      <span class="m-icon">🔽</span>
+      <div class="m-label">Menor diária</div>
+      <div class="m-val">${fS(minV)}</div>
+      <div class="m-sub">${rMinV ? rMinV.cliente || rMinV.filial : '—'}</div>
+    </div>
+    <div class="metric c-gold metric-clickable" onclick="openModalMax()">
+      <span class="m-icon">🔼</span>
+      <div class="m-label">Maior diária</div>
+      <div class="m-val">${fS(maxV)}</div>
+      <div class="m-sub">${rMaxV ? rMaxV.cliente || rMaxV.filial : '—'}</div>
+    </div>
+    <div class="metric c-blue metric-clickable" onclick="openModalMinH()">
+      <span class="m-icon">🕐</span>
+      <div class="m-label">Menor espera</div>
+      <div class="m-val">${minH.toFixed(1)}h</div>
+      <div class="m-sub">${Math.floor(minH/24)}d ${(minH%24).toFixed(1)}h &nbsp;·&nbsp; ${rMinH ? rMinH.cliente || rMinH.filial : '—'}</div>
+    </div>
+    <div class="metric c-gold metric-clickable" onclick="openModalMaxH()">
+      <span class="m-icon">🕙</span>
+      <div class="m-label">Maior espera</div>
+      <div class="m-val">${maxH.toFixed(1)}h</div>
+      <div class="m-sub">${Math.floor(maxH/24)}d ${(maxH%24).toFixed(1)}h &nbsp;·&nbsp; ${rMaxH ? rMaxH.cliente || rMaxH.filial : '—'}</div>
+    </div>
+    <div class="metric c-purple" style="cursor:default">
+      <span class="m-icon">⏱️</span>
+      <div class="m-label">Média de espera</div>
+      <div class="m-val">${avgH.toFixed(1)}h</div>
+      <div class="m-sub">${Math.floor(avgH/24)}d ${(avgH%24).toFixed(1)}h &nbsp;·&nbsp; por ocorrência</div>
+    </div>
+  `;
+}
+
+function openModalAg() {
+  const rows = filteredData.filter(r => r.status.includes('APROV'));
+  const total = rows.reduce((s, r) => s + r.valor, 0);
+  openModal('⏳ Ag. Aprovação — Detalhes', rows, [
+    { label: 'Registros', val: rows.length },
+    { label: 'Total R$',  val: fS(total) },
+    { label: 'Ticket médio', val: fS(rows.length ? total / rows.length : 0) }
+  ]);
+}
+
+function openModalRej() {
+  const rows = filteredData.filter(r => r.status.includes('REJEIT'));
+  const total = rows.reduce((s, r) => s + r.valor, 0);
+  openModal('❌ Rejeitados — Detalhes', rows, [
+    { label: 'Registros', val: rows.length },
+    { label: 'Total R$',  val: fS(total) },
+    { label: 'Ticket médio', val: fS(rows.length ? total / rows.length : 0) }
+  ]);
+}
+
+function openModalMin() {
+  const vals = filteredData.map(r => r.valor).filter(v => v > 0);
+  const minV = vals.length ? Math.min(...vals) : 0;
+  const row  = filteredData.find(r => r.valor === minV);
+  openModal('🔽 Menor Diária — Detalhes', row ? [row] : [], [
+    { label: 'Valor',    val: fS(minV) },
+    { label: 'Cliente',  val: row ? row.cliente || '—' : '—' },
+    { label: 'Filial',   val: row ? row.filial  || '—' : '—' },
+    { label: 'Ocorrência', val: row ? row.ocorrencia || '—' : '—' }
+  ]);
+}
+
+function openModalMax() {
+  const vals = filteredData.map(r => r.valor).filter(v => v > 0);
+  const maxV = vals.length ? Math.max(...vals) : 0;
+  const row  = filteredData.find(r => r.valor === maxV);
+  openModal('🔼 Maior Diária — Detalhes', row ? [row] : [], [
+    { label: 'Valor',    val: fS(maxV) },
+    { label: 'Cliente',  val: row ? row.cliente || '—' : '—' },
+    { label: 'Filial',   val: row ? row.filial  || '—' : '—' },
+    { label: 'Ocorrência', val: row ? row.ocorrencia || '—' : '—' }
+  ]);
+}
+
+function openModalMinH() {
+  const hs   = filteredData.map(r => r.horas).filter(h => h > 0 && h < 8760);
+  const minH = hs.length ? Math.min(...hs) : 0;
+  const row  = filteredData.find(r => r.horas === minH);
+  openModal('🕐 Menor Espera — Detalhes', row ? [row] : [], [
+    { label: 'Horas',      val: minH.toFixed(1) + 'h' },
+    { label: 'Cliente',    val: row ? row.cliente    || '—' : '—' },
+    { label: 'Filial',     val: row ? row.filial     || '—' : '—' },
+    { label: 'Ocorrência', val: row ? row.ocorrencia || '—' : '—' }
+  ]);
+}
+
+function openModalMaxH() {
+  const hs   = filteredData.map(r => r.horas).filter(h => h > 0 && h < 8760);
+  const maxH = hs.length ? Math.max(...hs) : 0;
+  const row  = filteredData.find(r => r.horas === maxH);
+  openModal('🕙 Maior Espera — Detalhes', row ? [row] : [], [
+    { label: 'Horas',      val: maxH.toFixed(1) + 'h' },
+    { label: 'Cliente',    val: row ? row.cliente    || '—' : '—' },
+    { label: 'Filial',     val: row ? row.filial     || '—' : '—' },
+    { label: 'Ocorrência', val: row ? row.ocorrencia || '—' : '—' }
+  ]);
+}
+
+// ── MODAL ──
+function openModal(title, rows, extraMetrics) {
+  document.getElementById('modalTitle').textContent = title;
+  const mm = document.getElementById('modalMetrics');
+  if (extraMetrics && extraMetrics.length) {
+    mm.innerHTML = extraMetrics.map(m =>
+      `<div class="modal-metric"><div class="mm-label">${m.label}</div><div class="mm-val">${m.val}</div>${m.sub ? `<div class="mm-sub">${m.sub}</div>` : ''}</div>`
+    ).join('');
+    mm.style.display = 'grid';
+  } else {
+    mm.innerHTML = ''; mm.style.display = 'none';
+  }
+  if (!rows || !rows.length) {
+    document.getElementById('modalThead').innerHTML = '';
+    document.getElementById('modalTbody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--tx3)">Sem registros</td></tr>';
+    document.getElementById('modalOverlay').classList.add('open');
+    return;
+  }
+  const cols = ['Filial','Cliente','Placa','CTe','NF','Ocorrência','Horas','Total R$','Status'];
+  const keys = ['filial','cliente','placa','cte','nf','ocorrencia','horas','valor','status'];
+  document.getElementById('modalThead').innerHTML = '<tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
+  document.getElementById('modalTbody').innerHTML = rows.slice(0, 200).map(r => {
+    const s = r.status || '';
+    const badge = s.includes('FATURAD') ? 'bf' : s.includes('APROV') ? 'ba' : 'br';
+    return '<tr>' + keys.map((k, i) =>
+      i === 8 ? `<td><span class="badge ${badge}">${s || '—'}</span></td>` :
+      i === 6 ? `<td class="vc">${(r.horas || 0).toFixed(1)}h</td>` :
+      i === 7 ? `<td class="vc">${fR(r.valor)}</td>` :
+               `<td>${r[k] || '—'}</td>`
+    ).join('') + '</tr>';
+  }).join('');
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modalOverlay'))
+    document.getElementById('modalOverlay').classList.remove('open');
+}
+
+// ── CHARTS ──
+function dc(id) { if (CH[id]) { CH[id].destroy(); delete CH[id]; } }
+
+function mkDonut(id, labels, vals, colors, field) {
+  dc(id);
+  CH[id] = new Chart(document.getElementById(id), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: vals, backgroundColor: colors, borderWidth: 2, borderColor: 'transparent', hoverOffset: 8 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '62%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => fR(ctx.raw) + ' (' + Math.round(ctx.raw / (vals.reduce((a, b) => a + b, 1)) * 100) + '%)' } }
+      },
+      onClick: (evt, el) => {
+        if (!el.length) return;
+        const lbl  = labels[el[0].index];
+        const rows = filteredData.filter(r => (r[field] || '').trim() === lbl.trim());
+        const tot  = rows.reduce((s, r) => s + r.valor, 0);
+        const avgH = rows.length ? rows.reduce((s, r) => s + r.horas, 0) / rows.length : 0;
+        openModal(`${field.charAt(0).toUpperCase() + field.slice(1)}: ${lbl}`,
+          [...rows].sort((a, b) => b.valor - a.valor),
+          [
+            { label: 'Total R$',     val: fS(tot) },
+            { label: 'Registros',    val: rows.length },
+            { label: 'Média espera', val: avgH.toFixed(1) + 'h' },
+            { label: 'Ticket médio', val: fS(rows.length ? tot / rows.length : 0) }
+          ]
+        );
+      }
+    }
+  });
+}
+
+function renderCharts() {
+  const d = filteredData;
+
+  // ── Linha do tempo ──
+  const bM = {}, bQ = {};
+  d.forEach(r => {
+    const dt = toDate(r.data); if (!dt) return;
+    const k = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
+    bM[k] = (bM[k] || 0) + r.valor;
+    bQ[k] = (bQ[k] || 0) + 1;
+  });
+  const mK = Object.keys(bM).sort().slice(-24);
+  const mV = mK.map(k => bM[k]);
+  const mQ = mK.map(k => bQ[k] || 0);
+  const mL = mK.map(k => {
+    const [y, m] = k.split('-');
+    return ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][+m - 1] + '/' + y.slice(2);
+  });
+  dc('cMensal');
+  CH['cMensal'] = new Chart(document.getElementById('cMensal'), {
+    data: {
+      labels: mL,
+      datasets: [
+        { type: 'bar',  label: 'Total R$',     data: mV, backgroundColor: 'rgba(30,125,50,.75)', borderColor: '#2e9e44', borderWidth: 1, borderRadius: 6, yAxisID: 'y' },
+        { type: 'line', label: 'Ocorrências',  data: mQ, borderColor: '#f0b429', backgroundColor: 'rgba(240,180,41,.1)', pointBackgroundColor: '#f0b429', pointRadius: 5, pointHoverRadius: 7, tension: .35, fill: true, yAxisID: 'y2' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, labels: { color: '#7aaa86', boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ctx.datasetIndex === 0 ? fR(ctx.raw) : ctx.raw + ' ocorr.' } }
+      },
+      scales: {
+        x:  { ticks: { color: '#4d7a58', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(45,82,56,.4)' } },
+        y:  { ticks: { callback: v => fS(v), color: '#4d7a58', font: { size: 9 } }, grid: { color: 'rgba(45,82,56,.4)' } },
+        y2: { position: 'right', ticks: { color: '#f0b429', font: { size: 9 } }, grid: { display: false } }
+      },
+      onClick: (evt, el) => {
+        if (!el.length) return;
+        const lbl  = mL[el[0].index], key = mK[el[0].index];
+        const rows = d.filter(r => {
+          const dt = toDate(r.data); if (!dt) return false;
+          const k  = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
+          return k === key;
+        });
+        const tot  = rows.reduce((s, r) => s + r.valor, 0);
+        const avgH = rows.length ? rows.reduce((s, r) => s + r.horas, 0) / rows.length : 0;
+        openModal('Mês: ' + lbl, [...rows].sort((a, b) => b.valor - a.valor), [
+          { label: 'Total R$',      val: fS(tot) },
+          { label: 'Ocorrências',   val: rows.length },
+          { label: 'Média espera',  val: avgH.toFixed(1) + 'h' },
+          { label: 'Ticket médio',  val: fS(rows.length ? tot / rows.length : 0) }
+        ]);
+      }
+    }
+  });
+
+  // ── Top clientes ──
+  const bC = {};
+  d.forEach(r => { if (r.cliente) bC[r.cliente.trim()] = (bC[r.cliente.trim()] || 0) + r.valor; });
+  const cK = Object.keys(bC).sort((a, b) => bC[b] - bC[a]).slice(0, 10);
+  const cV = cK.map(k => bC[k]);
+  dc('cCliente');
+  document.getElementById('cCliente').parentElement.style.height = Math.max(cK.length * 30 + 60, 180) + 'px';
+  CH['cCliente'] = new Chart(document.getElementById('cCliente'), {
+    type: 'bar',
+    data: {
+      labels: cK,
+      datasets: [{ data: cV, backgroundColor: COLORS.slice(0, cK.length).map(c => c + 'bb'), borderColor: COLORS.slice(0, cK.length), borderWidth: 1, borderRadius: 4, hoverBorderWidth: 2 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => fR(ctx.raw) } }
+      },
+      scales: {
+        x: { ticks: { callback: v => fS(v), color: '#4d7a58', font: { size: 9 } }, grid: { color: 'rgba(45,82,56,.4)' } },
+        y: { ticks: { color: '#7aaa86', font: { size: 10 } } }
+      },
+      onClick: (evt, el) => {
+        if (!el.length) return;
+        const cli  = cK[el[0].index];
+        const rows = filteredData.filter(r => r.cliente.trim() === cli);
+        const tot  = rows.reduce((s, r) => s + r.valor, 0);
+        const avgH = rows.length ? rows.reduce((s, r) => s + r.horas, 0) / rows.length : 0;
+        openModal('Cliente: ' + cli, [...rows].sort((a, b) => b.valor - a.valor), [
+          { label: 'Total R$',     val: fS(tot) },
+          { label: 'Registros',    val: rows.length },
+          { label: 'Média espera', val: avgH.toFixed(1) + 'h' },
+          { label: 'Ticket médio', val: fS(rows.length ? tot / rows.length : 0) }
+        ]);
+      }
+    }
+  });
+
+  // ── Ocorrência ──
+  const bO = {};
+  d.forEach(r => { const k = (r.ocorrencia || '—').trim(); bO[k] = (bO[k] || 0) + r.valor; });
+  const oK = Object.keys(bO).sort((a, b) => bO[b] - bO[a]);
+  const oV = oK.map(k => bO[k]);
+  const oC = COLORS.slice(0, oK.length);
+  document.getElementById('lgOc').innerHTML = oK.map((k, i) => `<span><span class="ld" style="background:${oC[i]}"></span>${k}</span>`).join('');
+  mkDonut('cOcorrencia', oK, oV, oC, 'ocorrencia');
+
+  // ── Filial ──
+  const bF = {};
+  d.forEach(r => { if (r.filial) bF[r.filial] = (bF[r.filial] || 0) + r.valor; });
+  const fK = Object.keys(bF).sort((a, b) => bF[b] - bF[a]);
+  const fV = fK.map(k => bF[k]);
+  const fC = fK.map((_, i) => COLORS[i % COLORS.length]);
+  document.getElementById('lgFilial').innerHTML = fK.map((k, i) => `<span><span class="ld" style="background:${fC[i]}"></span>${k}</span>`).join('');
+  mkDonut('cFilial', fK, fV, fC, 'filial');
+
+  // ── Contrato ──
+  const bCo = {};
+  d.forEach(r => { const k = (r.contrato || '—').trim(); if (k) bCo[k] = (bCo[k] || 0) + r.valor; });
+  const coK = Object.keys(bCo).sort((a, b) => bCo[b] - bCo[a]);
+  const coV = coK.map(k => bCo[k]);
+  const coC = coK.map((_, i) => ['#2e9e44','#f0b429','#378ADD','#D85A30'][i % 4]);
+  document.getElementById('lgContrato').innerHTML = coK.map((k, i) => `<span><span class="ld" style="background:${coC[i]}"></span>${k}</span>`).join('');
+  mkDonut('cContrato', coK, coV, coC, 'contrato');
+
+  // ── Status ──
+  const bSt = {};
+  d.forEach(r => { const k = (r.status || '—').trim().toUpperCase(); if (k) bSt[k] = (bSt[k] || 0) + r.valor; });
+  const stK = Object.keys(bSt).sort((a, b) => bSt[b] - bSt[a]);
+  const stV = stK.map(k => bSt[k]);
+  const stC = stK.map(k => k.includes('FATURAD') ? '#2e9e44' : k.includes('APROV') ? '#f0b429' : '#ef4444');
+  document.getElementById('lgStatus').innerHTML = stK.map((k, i) => `<span><span class="ld" style="background:${stC[i]}"></span>${k}</span>`).join('');
+  mkDonut('cStatus', stK, stV, stC, 'status');
+}
+
+// ── TABLE ──
+function renderTable() {
+  const total = filteredData.length, pages = Math.ceil(total / PS), start = (currentPage - 1) * PS;
+  document.getElementById('tableCount').textContent = total.toLocaleString('pt-BR') + ' registros';
+  const tb = document.getElementById('tbody'); tb.innerHTML = '';
+  filteredData.slice(start, start + PS).forEach(r => {
+    const ri = allData.indexOf(r), s = r.status || '';
+    const badge = s.includes('FATURAD') ? 'bf' : s.includes('APROV') ? 'ba' : 'br';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.filial||'—'}</td><td>${r.cliente||'—'}</td><td>${r.placa||'—'}</td><td>${r.cte||'—'}</td><td>${r.nf||'—'}</td><td>${r.ste||'—'}</td><td>${r.contrato||'—'}</td><td>${r.ocorrencia||'—'}</td><td class="vc">${(r.horas||0).toFixed(1)}h</td><td class="vc">${fR(r.valor)}</td><td><span class="badge ${badge}">${s||'—'}</span></td><td><button class="btn-del" onclick="delRow(${ri})">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+  const pg = document.getElementById('pagination');
+  if (pages <= 1) { pg.innerHTML = `<span>${total} registro${total !== 1 ? 's' : ''}</span>`; return; }
+  let btns = '', sp = [];
+  for (let i = 1; i <= pages; i++) if (i === 1 || i === pages || Math.abs(i - currentPage) <= 2) sp.push(i);
+  let prev = 0;
+  sp.forEach(p => {
+    if (prev && p - prev > 1) btns += `<button class="pgb" disabled>…</button>`;
+    btns += `<button class="pgb${p === currentPage ? ' active' : ''}" onclick="goPage(${p})">${p}</button>`;
+    prev = p;
+  });
+  pg.innerHTML = `<span>${start + 1}–${Math.min(start + PS, total)} de ${total}</span><div class="pg-btns"><button class="pgb" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹</button>${btns}<button class="pgb" onclick="goPage(${currentPage + 1})" ${currentPage === pages ? 'disabled' : ''}>›</button></div>`;
+}
+
+function goPage(p) { currentPage = Math.max(1, Math.min(p, Math.ceil(filteredData.length / PS))); renderTable(); }
+
+// ── ADD / DELETE ──
+function addRow() {
+  const f = document.getElementById('iFilial').value.trim();
+  const c = document.getElementById('iCliente').value.trim();
+  const v = parseFloat(document.getElementById('iValor').value) || 0;
+  if (!f || !c || !v) { alert('Preencha ao menos Filial, Cliente e Total R$.'); return; }
+  allData.push({
+    filial:     f, cliente: c,
+    placa:      document.getElementById('iPlaca').value.trim().toUpperCase(),
+    cte:        document.getElementById('iCte').value.trim(),
+    nf:         document.getElementById('iNf').value.trim(),
+    contrato:   document.getElementById('iContrato').value,
+    ocorrencia: document.getElementById('iOcorrencia').value,
+    horas:      parseFloat(document.getElementById('iHoras').value) || 0,
+    valor:      v,
+    status:     document.getElementById('iStatus').value,
+    data:       new Date()
+  });
+  ['iFilial','iCliente','iPlaca','iCte','iNf','iValor','iHoras'].forEach(id => document.getElementById(id).value = '');
+  populateFilters(); applyFilters();
+}
+
+function delRow(i) {
+  if (!confirm('Remover este registro?')) return;
+  allData.splice(i, 1); populateFilters(); applyFilters();
+}
+
+// ── EXPORT ──
+function exportCSV() {
+  const h    = ['Filial','Cliente','Placa','CTe','NF','STE','Contrato','Ocorrência','Horas','Total R$','Status'];
+  const rows = filteredData.map(r =>
+    [r.filial, r.cliente, r.placa, r.cte, r.nf, r.ste, r.contrato, r.ocorrencia, r.horas, r.valor, r.status]
+    .map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',')
+  );
+  dl('diarias.csv', '﻿' + h.join(',') + '\n' + rows.join('\n'), 'text/csv;charset=utf-8');
+}
+
+function exportXLSX() {
+  const ws = XLSX.utils.json_to_sheet(filteredData.map(r => ({
+    Filial: r.filial, Cliente: r.cliente, Placa: r.placa, CTe: r.cte, NF: r.nf, STE: r.ste,
+    Contrato: r.contrato, 'Ocorrência': r.ocorrencia, Horas: r.horas,
+    'Total R$': r.valor, Status: r.status
+  })));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Diárias');
+  XLSX.writeFile(wb, 'diarias.xlsx');
+}
+
+function dl(name, content, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = name;
+  a.click();
+}
+
+</script>
+</body>
+</html>
