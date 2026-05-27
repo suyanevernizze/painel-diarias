@@ -18,7 +18,55 @@
   --acc: #4caf60; --acc2: #2e9e44;
   --gold: #f0b429; --amber: #f59e0b; --red: #ef4444; --blue: #378ADD; --teal: #1D9E75; --purple: #8b7cf6;
   --r: 8px; --rl: 14px; --rxl: 20px;
+  --hdr-bg: linear-gradient(180deg, #0a1f0d 0%, #081508 100%);
+  --shadow: rgba(0,0,0,.6);
 }
+
+/* MODO CLARO */
+body.light {
+  --bg: #f0f7f1; --sf: #ffffff; --sf2: #f4faf5; --sf3: #e8f5eb; --sf4: #dff0e2;
+  --bd: #c8e6cc; --bd2: #b2d9b7; --bd3: #8ec995;
+  --tx: #0d2e12; --tx2: #1a5e26; --tx3: #2d7a3a; --tx4: #4a9954;
+  --acc: #1e7d32; --acc2: #145222;
+  --hdr-bg: linear-gradient(180deg, #145222 0%, #0f3d1a 100%);
+  --shadow: rgba(0,0,0,.15);
+}
+body.light .cg label { color: #0d2e12; font-weight: 800; }
+body.light select, body.light input[type=date], body.light input[type=text], body.light input[type=number] {
+  background: #fff; border-color: #8ec995; color: #0d2e12; font-weight: 500;
+}
+body.light select option { background: #fff; color: #0d2e12; }
+body.light .slabel { color: #0d2e12; font-weight: 800; }
+body.light .card-title { color: #0d2e12; font-weight: 800; }
+body.light .m-label { color: #1a5e26; font-weight: 800; }
+body.light .m-val { color: #0d2e12; }
+body.light .m-sub { color: #2d7a3a; font-weight: 500; }
+body.light thead th { color: #0d2e12; font-weight: 800; background: #e8f5eb; }
+body.light tbody td { color: #0d2e12; font-weight: 500; }
+body.light .table-title { color: #0d2e12; font-weight: 700; }
+body.light .table-count { color: #1a5e26; font-weight: 700; border-color: #b2d9b7; }
+body.light .table-search { background: #fff; color: #0d2e12; border-color: #8ec995; }
+body.light .table-search::placeholder { color: #4a9954; }
+body.light .pagination { color: #1a5e26; font-weight: 600; }
+body.light .btn-reset { color: #0d2e12; font-weight: 700; border-color: #8ec995; }
+body.light .btn-reset:hover { background: #e8f5eb; }
+body.light .export-bar .btn-export { color: #0d2e12; font-weight: 600; border-color: #8ec995; }
+body.light footer { color: #2d7a3a; }
+
+/* BOTÃO MODO */
+.btn-theme {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 14px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.1);
+  color: #fff; font-family: 'Inter', sans-serif;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all .2s; white-space: nowrap;
+}
+.btn-theme:hover { background: rgba(255,255,255,.2); border-color: rgba(255,255,255,.4); }
+body.light .btn-theme { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.15); }
+.btn-theme .theme-icon { font-size: 15px; transition: transform .3s; }
+body.light .btn-theme .theme-icon { transform: rotate(180deg); }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -31,7 +79,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tx)
 
 /* HEADER */
 header {
-  background: linear-gradient(180deg, var(--g900) 0%, #081508 100%);
+  background: var(--hdr-bg);
   border-bottom: 1px solid var(--bd2);
   padding: 0 2rem;
   display: flex;
@@ -46,19 +94,20 @@ header {
 .logo-wrap { display: flex; align-items: center; gap: 14px; }
 .logo-img { height: 40px; width: auto; filter: brightness(0) invert(1); opacity: .95; }
 .logo-icon {
-  width: 36px; height: 36px; background: var(--acc2);
-  border-radius: 8px; display: flex; align-items: center; justify-content: center;
-  font-size: 18px; font-weight: 800; color: #fff; font-family: 'Inter', sans-serif;
-  flex-shrink: 0;
+  width: 42px; height: 42px; background: var(--acc2);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 900; color: #fff; font-family: 'Inter', sans-serif;
+  flex-shrink: 0; box-shadow: 0 2px 12px rgba(46,158,68,.5);
+  border: 2px solid rgba(255,255,255,.2);
 }
-.logo-name-wrap { display: flex; flex-direction: column; gap: 1px; }
+.logo-name-wrap { display: flex; flex-direction: column; gap: 2px; }
 .logo-text {
-  font-size: 15px; font-weight: 800; color: #ffffff;
-  letter-spacing: .08em; font-family: 'Inter', sans-serif; line-height: 1;
+  font-size: 18px; font-weight: 900; color: #ffffff;
+  letter-spacing: .12em; font-family: 'Inter', sans-serif; line-height: 1;
+  text-shadow: 0 1px 8px rgba(0,0,0,.3);
 }
-.logo-dot { color: var(--acc); }
-.logo-div { width: 1px; height: 30px; background: var(--bd2); }
-.logo-sub { font-size: 10px; color: var(--tx3); font-weight: 500; letter-spacing: .1em; text-transform: uppercase; }
+.logo-dot { color: #4caf60; }
+.logo-sub { font-size: 10px; color: rgba(255,255,255,.55); font-weight: 600; letter-spacing: .15em; text-transform: uppercase; }
 .logo-div { width: 1px; height: 30px; background: var(--bd2); }
 .logo-sub { font-size: 11px; color: var(--tx3); font-weight: 500; letter-spacing: .07em; text-transform: uppercase; }
 .hdr-right { display: flex; align-items: center; gap: 10px; }
@@ -314,6 +363,10 @@ footer {
     </div>
   </div>
   <div class="hdr-right">
+    <button class="btn-theme" onclick="toggleTheme()" id="btnTheme">
+      <span class="theme-icon">🌙</span>
+      <span id="themeLabel">Modo claro</span>
+    </button>
     <span class="file-badge" id="fileInfo">Nenhum arquivo carregado</span>
     <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -560,6 +613,29 @@ const PS = 50;
 let CH = {};
 const COLORS = ['#2e9e44','#f0b429','#378ADD','#D85A30','#8b7cf6','#1D9E75','#e8843a','#d4537e','#ef4444','#4caf60'];
 
+// ── TEMA ──
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  localStorage.setItem('binotto-theme', isLight ? 'light' : 'dark');
+  document.getElementById('themeLabel').textContent = isLight ? 'Modo escuro' : 'Modo claro';
+  document.querySelector('.theme-icon').textContent  = isLight ? '☀️' : '🌙';
+  // Atualiza gráficos para refletir novo tema
+  if (filteredData.length) renderCharts();
+}
+// Aplica tema salvo ao carregar
+(function() {
+  const saved = localStorage.getItem('binotto-theme');
+  if (saved === 'light') {
+    document.body.classList.add('light');
+    document.addEventListener('DOMContentLoaded', () => {
+      const lbl = document.getElementById('themeLabel');
+      const ico = document.querySelector('.theme-icon');
+      if (lbl) lbl.textContent = 'Modo escuro';
+      if (ico) ico.textContent = '☀️';
+    });
+  }
+})();
+
 // ── FORMATTERS ──
 // Formata valor em BRL com centavos: R$ 1.234,56
 const fR = v => (Number(v) || 0).toLocaleString('pt-BR', {
@@ -691,6 +767,7 @@ function processFile(file) {
         const cidade     = String(row['Cidade Entrega']    || '').trim().toUpperCase();
         const uf         = String(row['UF']                || '').trim().toUpperCase();
         const dataT      = row['Data Transporte'] || row['Data Hora Chegada'] || '';
+        const dataCte    = row['DATA CTE'] || '';
 
         // TOTAL R$ — com raw:true vem como número diretamente
         const valorRaw = row['TOTAL R$'];
@@ -707,7 +784,7 @@ function processFile(file) {
         if (!filial && !cliente && !valor) return;
         if (filial === 'FILIAL' || cliente === 'CLIENTE KLABIN') return; // linha cabeçalho duplicado
 
-        data.push({ filial, cliente, contrato, ocorrencia, status, placa, cte, nf, ste, cidade, uf, horas, valor, data: dataT });
+        data.push({ filial, cliente, contrato, ocorrencia, status, placa, cte, nf, ste, cidade, uf, horas, valor, data: dataT, dataCte });
       });
 
       if (!data.length) {
@@ -804,7 +881,7 @@ function applyFilters() {
       if (!hay.includes(q)) return false;
     }
     if (dtI || dtF) {
-      const rd = toDate(r.data);
+      const rd = toDate(r.dataCte);
       if (!rd) return false;
       if (dtI && rd < dtI) return false;
       if (dtF && rd > dtF) return false;
@@ -846,20 +923,48 @@ function srt(col) {
 
 // ── METRICS ──
 function renderMetrics() {
-  const d = filteredData;
-  if (!d.length) {
+  const d = filteredData; // filtrado por DATA CTE e demais filtros
+
+  if (!d.length && !allData.length) {
     document.getElementById('metrics').innerHTML = '<div class="metric"><div class="m-label">Sem dados</div></div>';
     return;
   }
-  const vals  = d.map(r => r.valor).filter(v => v > 0);
-  const total = vals.reduce((s, v) => s + v, 0);
-  const fat   = d.filter(r => r.status.includes('FATURAD')).reduce((s, r) => s + r.valor, 0);
 
-  const agRows = d.filter(r => r.status.includes('APROV'));
-  const ag     = agRows.reduce((s, r) => s + r.valor, 0);
+  // Total Geral = Faturado + Ag. Aprovação + Rejeitado (sem filtro de data)
+  const filialF    = document.getElementById('selFilial').value;
+  const contratoF  = document.getElementById('selContrato').value;
+  const ocorrenciaF= document.getElementById('selOcorrencia').value;
+  const clienteF   = document.getElementById('selCliente').value;
+  const cidadeF    = document.getElementById('selCidade').value;
+  const placaF     = document.getElementById('selPlaca').value.toUpperCase().trim();
+  const cteF       = document.getElementById('selCte').value.trim();
+  const nfF        = document.getElementById('selNf').value.trim();
+  const steF       = document.getElementById('selSte').value.trim();
 
+  const dSemData = allData.filter(r => {
+    if (filialF     && r.filial     !== filialF)     return false;
+    if (contratoF   && r.contrato   !== contratoF)   return false;
+    if (ocorrenciaF && r.ocorrencia !== ocorrenciaF) return false;
+    if (clienteF    && r.cliente    !== clienteF)    return false;
+    if (cidadeF     && r.cidade     !== cidadeF)     return false;
+    if (placaF      && !r.placa.includes(placaF))    return false;
+    if (cteF        && !r.cte.includes(cteF))        return false;
+    if (nfF         && !r.nf.includes(nfF))          return false;
+    if (steF        && !String(r.ste||'').includes(steF)) return false;
+    return true;
+  });
+
+  const agRows  = dSemData.filter(r => r.status.includes('APROV'));
+  const ag      = agRows.reduce((s, r) => s + r.valor, 0);
   const rejRows = d.filter(r => r.status.includes('REJEIT'));
   const rej     = rejRows.reduce((s, r) => s + r.valor, 0);
+
+  // Faturado — filtrado por DATA CTE (período selecionado)
+  const fat   = d.filter(r => r.status.includes('FATURAD')).reduce((s, r) => s + r.valor, 0);
+
+  // Total Geral = Faturado (DATA CTE) + Ag. Aprovação (tudo) + Rejeitado (DATA CTE)
+  const total = fat + ag + rej;
+  const vals  = d.map(r => r.valor).filter(v => v > 0);
 
   const minV  = vals.length ? Math.min(...vals) : 0;
   const maxV  = vals.length ? Math.max(...vals) : 0;
@@ -1013,35 +1118,32 @@ function openModalFilialRanking() {
 }
 
 function openModalTotal() {
-  const d = filteredData;
-  const total = d.reduce((s,r) => s+r.valor, 0);
-  const fat   = d.filter(r => r.status.includes('FATURAD')).reduce((s,r) => s+r.valor, 0);
-  const ag    = d.filter(r => r.status.includes('APROV')).reduce((s,r) => s+r.valor, 0);
-  const rej   = d.filter(r => r.status.includes('REJEIT')).reduce((s,r) => s+r.valor, 0);
-  const avgV  = d.length ? total / d.length : 0;
-  const pct   = total ? Math.round(fat/total*100) : 0;
+  const fat  = filteredData.filter(r => r.status.includes('FATURAD')).reduce((s,r) => s+r.valor, 0);
+  const ag   = allData.filter(r => r.status.includes('APROV')).reduce((s,r) => s+r.valor, 0);
+  const rej  = filteredData.filter(r => r.status.includes('REJEIT')).reduce((s,r) => s+r.valor, 0);
+  const total = fat + ag + rej;
+  const avgV  = filteredData.length ? filteredData.reduce((s,r)=>s+r.valor,0) / filteredData.length : 0;
 
-  // Passa uma métrica dummy para forçar o bloco a aparecer, depois substitui
-  openModal('💰 Total Geral — Detalhes', d, [{ label: ' ', val: ' ' }]);
+  openModal('💰 Total Geral — Detalhes', filteredData, [{ label: ' ', val: ' ' }]);
 
   const mm = document.getElementById('modalMetrics');
   mm.style.display = 'block';
   mm.innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px">
-      <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(total)}</div></div>
-      <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${d.length.toLocaleString('pt-BR')}</div></div>
-      <div class="modal-metric"><div class="mm-label">Faturado</div><div class="mm-val">${fS(fat)}</div><div class="mm-sub">${pct}% do total</div></div>
-      <div class="modal-metric"><div class="mm-label">Ag. Aprovação</div><div class="mm-val">${fS(ag)}</div></div>
+      <div class="modal-metric"><div class="mm-label">Total Geral</div><div class="mm-val">${fS(total)}</div><div class="mm-sub">Fat + Ag + Rej</div></div>
+      <div class="modal-metric"><div class="mm-label">Faturado</div><div class="mm-val">${fS(fat)}</div><div class="mm-sub">${total?Math.round(fat/total*100):0}% do total</div></div>
+      <div class="modal-metric"><div class="mm-label">Ag. Aprovação</div><div class="mm-val">${fS(ag)}</div><div class="mm-sub">${total?Math.round(ag/total*100):0}% do total</div></div>
+      <div class="modal-metric"><div class="mm-label">Rejeitado</div><div class="mm-val">${fS(rej)}</div><div class="mm-sub">${total?Math.round(rej/total*100):0}% do total</div></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:10px">
-      <div class="modal-metric"><div class="mm-label">Rejeitado</div><div class="mm-val">${fS(rej)}</div></div>
+      <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${filteredData.length.toLocaleString('pt-BR')}</div></div>
       <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(avgV)}</div></div>
     </div>
   `;
 }
 
 function openModalAg() {
-  const rows = filteredData.filter(r => r.status.includes('APROV'));
+  const rows = allData.filter(r => r.status.includes('APROV'));
   const total = rows.reduce((s, r) => s + r.valor, 0);
   openModal('⏳ Ag. Aprovação — Detalhes', rows, [
     { label: 'Registros', val: rows.length },
@@ -1201,10 +1303,10 @@ function mkDonut(id, labels, vals, colors, field) {
 function renderCharts() {
   const d = filteredData;
 
-  // ── Linha do tempo ──
+  // ── Linha do tempo (baseado em DATA CTE) ──
   const bM = {}, bQ = {};
   d.forEach(r => {
-    const dt = toDate(r.data); if (!dt) return;
+    const dt = toDate(r.dataCte); if (!dt) return;
     const k = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
     bM[k] = (bM[k] || 0) + r.valor;
     bQ[k] = (bQ[k] || 0) + 1;
@@ -1241,7 +1343,7 @@ function renderCharts() {
         if (!el.length) return;
         const lbl  = mL[el[0].index], key = mK[el[0].index];
         const rows = d.filter(r => {
-          const dt = toDate(r.data); if (!dt) return false;
+          const dt = toDate(r.dataCte); if (!dt) return false;
           const k  = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
           return k === key;
         });
