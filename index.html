@@ -161,23 +161,37 @@ header {
 /* CONTROLS */
 .controls {
   background: var(--sf); border: 1px solid var(--bd); border-radius: var(--rl);
-  padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
+  padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+  display: flex; flex-direction: column; gap: 10px;
 }
+.ctrl-row { display: flex; gap: 10px; align-items: flex-end; width: 100%; }
+/* Linha 1: 6 colunas — Filial, Contrato, Ocorrência, Status, Cliente (largo), Cidade */
+.ctrl-row-top { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr; gap: 10px; }
+/* Linha 2: campos menores + botão */
+.ctrl-row-bot { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr auto; gap: 10px; align-items: flex-end; }
 .cg { display: flex; flex-direction: column; gap: 4px; }
 .cg label { font-size: 10px; font-weight: 700; color: var(--tx3); text-transform: uppercase; letter-spacing: .08em; }
 select, input[type=date], input[type=text] {
-  padding: 7px 10px; border-radius: var(--r); border: 1px solid var(--bd2);
+  padding: 7px 8px; border-radius: var(--r); border: 1px solid var(--bd2);
   background: var(--sf2); color: var(--tx); font-family: 'Inter', sans-serif;
-  font-size: 13px; outline: none; min-width: 130px; transition: border-color .15s;
+  font-size: 12px; outline: none; width: 100%; transition: border-color .15s;
+}
+.btn-reset {
+  padding: 7px 12px; border-radius: var(--r); border: 1px solid var(--bd2);
+  background: transparent; color: var(--tx2); font-family: 'Inter', sans-serif;
+  font-size: 12px; cursor: pointer; transition: all .15s; white-space: nowrap; align-self: flex-end;
+}
+.multi-select { position: relative; width: 100%; }
+.ms-trigger {
+  display: flex; align-items: center; justify-content: space-between; gap: 4px;
+  padding: 7px 8px; border-radius: var(--r); border: 1px solid var(--bd2);
+  background: var(--sf2); color: var(--tx); font-size: 12px; cursor: pointer;
+  user-select: none; white-space: nowrap; width: 100%;
+  transition: border-color .15s;
 }
 select:focus, input[type=date]:focus, input[type=text]:focus { border-color: var(--acc); }
 select::placeholder, input::placeholder { color: var(--tx3); }
-.btn-reset {
-  padding: 8px 16px; border-radius: var(--r); border: 1px solid var(--bd2);
-  background: transparent; color: var(--tx2); font-family: 'Inter', sans-serif;
-  font-size: 13px; cursor: pointer; transition: all .15s; white-space: nowrap;
-}
-.btn-reset:hover { background: var(--sf2); color: var(--tx); border-color: var(--bd3); }
+
 
 /* METRICS */
 .metrics { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-bottom: 1.5rem; }
@@ -352,14 +366,7 @@ footer {
 .metric.c-red::before { background: var(--red); }
 
 /* MULTI-SELECT */
-.multi-select { position: relative; min-width: 130px; }
-.ms-trigger {
-  display: flex; align-items: center; justify-content: space-between; gap: 6px;
-  padding: 7px 10px; border-radius: var(--r); border: 1px solid var(--bd2);
-  background: var(--sf2); color: var(--tx); font-size: 13px; cursor: pointer;
-  user-select: none; white-space: nowrap; min-width: 130px;
-  transition: border-color .15s;
-}
+
 .ms-trigger:hover, .multi-select.open .ms-trigger { border-color: var(--acc); }
 .ms-arrow { font-size: 10px; color: var(--tx3); transition: transform .2s; flex-shrink: 0; }
 .multi-select.open .ms-arrow { transform: rotate(180deg); }
@@ -446,85 +453,82 @@ body.light .ms-dropdown { box-shadow: 0 8px 24px rgba(0,0,0,.12); }
     <!-- FILTROS -->
     <div class="slabel">Filtros</div>
     <div class="controls">
-      <div class="cg">
-        <label>Filial</label>
-        <div class="multi-select" id="msFilial">
-          <div class="ms-trigger" onclick="toggleMs('msFilial')">
-            <span id="msFilialLabel">Todas</span>
-            <span class="ms-arrow">▾</span>
+      <!-- LINHA 1: selects principais -->
+      <div class="ctrl-row ctrl-row-top">
+        <div class="cg cg-ms">
+          <label>Filial</label>
+          <div class="multi-select" id="msFilial">
+            <div class="ms-trigger" onclick="toggleMs('msFilial')"><span id="msFilialLabel">Todas</span><span class="ms-arrow">▾</span></div>
+            <div class="ms-dropdown" id="msFilialDropdown"></div>
           </div>
-          <div class="ms-dropdown" id="msFilialDropdown"></div>
+        </div>
+        <div class="cg cg-ms">
+          <label>Contrato</label>
+          <div class="multi-select" id="msContrato">
+            <div class="ms-trigger" onclick="toggleMs('msContrato')"><span id="msContratoLabel">Todos</span><span class="ms-arrow">▾</span></div>
+            <div class="ms-dropdown" id="msContratoDropdown"></div>
+          </div>
+        </div>
+        <div class="cg cg-ms">
+          <label>Ocorrência</label>
+          <div class="multi-select" id="msOcorrencia">
+            <div class="ms-trigger" onclick="toggleMs('msOcorrencia')"><span id="msOcorrenciaLabel">Todas</span><span class="ms-arrow">▾</span></div>
+            <div class="ms-dropdown" id="msOcorrenciaDropdown"></div>
+          </div>
+        </div>
+        <div class="cg">
+          <label>Status</label>
+          <select id="selStatus" onchange="applyFilters()"><option value="">Todos</option></select>
+        </div>
+        <div class="cg cg-wide">
+          <label>Cliente</label>
+          <select id="selCliente" onchange="applyFilters()"><option value="">Todos</option></select>
+        </div>
+        <div class="cg">
+          <label>Cidade</label>
+          <select id="selCidade" onchange="applyFilters()"><option value="">Todas</option></select>
         </div>
       </div>
-      <div class="cg">
-        <label>Contrato</label>
-        <div class="multi-select" id="msContrato">
-          <div class="ms-trigger" onclick="toggleMs('msContrato')">
-            <span id="msContratoLabel">Todos</span>
-            <span class="ms-arrow">▾</span>
-          </div>
-          <div class="ms-dropdown" id="msContratoDropdown"></div>
+      <!-- LINHA 2: inputs de texto, datas e período -->
+      <div class="ctrl-row ctrl-row-bot">
+        <div class="cg">
+          <label>Oferta</label>
+          <input type="text" id="selOferta" placeholder="nº Oferta" oninput="applyFilters()">
         </div>
-      </div>
-      <div class="cg">
-        <label>Ocorrência</label>
-        <div class="multi-select" id="msOcorrencia">
-          <div class="ms-trigger" onclick="toggleMs('msOcorrencia')">
-            <span id="msOcorrenciaLabel">Todas</span>
-            <span class="ms-arrow">▾</span>
-          </div>
-          <div class="ms-dropdown" id="msOcorrenciaDropdown"></div>
+        <div class="cg">
+          <label>Placa</label>
+          <input type="text" id="selPlaca" placeholder="ex: ABC1234" oninput="applyFilters()">
         </div>
+        <div class="cg">
+          <label>CTe</label>
+          <input type="text" id="selCte" placeholder="número CTe" oninput="applyFilters()">
+        </div>
+        <div class="cg">
+          <label>STE</label>
+          <input type="text" id="selSte" placeholder="número STE" oninput="applyFilters()">
+        </div>
+        <div class="cg">
+          <label>Data início</label>
+          <input type="date" id="selDtI" onchange="applyFilters()">
+        </div>
+        <div class="cg">
+          <label>Data fim</label>
+          <input type="date" id="selDtF" onchange="applyFilters()">
+        </div>
+        <div class="cg">
+          <label>Período rápido</label>
+          <select id="selPeriodo" onchange="applyQuickPeriod()">
+            <option value="">Personalizado</option>
+            <option value="thismonth">Mês atual</option>
+            <option value="lastmonth">Mês anterior</option>
+            <option value="trimestre">Trimestre atual</option>
+            <option value="semestre">Semestre atual</option>
+            <option value="thisyear">Ano atual</option>
+            <option value="lastyear">Ano anterior</option>
+          </select>
+        </div>
+        <button class="btn-reset" onclick="resetFilters()">↺ Limpar filtros</button>
       </div>
-      <div class="cg">
-        <label>Status</label>
-        <select id="selStatus" onchange="applyFilters()"><option value="">Todos</option></select>
-      </div>
-      <div class="cg">
-        <label>Cliente</label>
-        <select id="selCliente" onchange="applyFilters()"><option value="">Todos</option></select>
-      </div>
-      <div class="cg">
-        <label>Cidade</label>
-        <select id="selCidade" onchange="applyFilters()"><option value="">Todas</option></select>
-      </div>
-      <div class="cg">
-        <label>Oferta</label>
-        <input type="text" id="selOferta" placeholder="nº Oferta" oninput="applyFilters()">
-      </div>
-      <div class="cg">
-        <label>Placa</label>
-        <input type="text" id="selPlaca" placeholder="ex: ABC1234" oninput="applyFilters()">
-      </div>
-      <div class="cg">
-        <label>CTe</label>
-        <input type="text" id="selCte" placeholder="número CTe" oninput="applyFilters()">
-      </div>
-      <div class="cg">
-        <label>STE</label>
-        <input type="text" id="selSte" placeholder="número STE" oninput="applyFilters()">
-      </div>
-      <div class="cg">
-        <label>Data início</label>
-        <input type="date" id="selDtI" onchange="applyFilters()">
-      </div>
-      <div class="cg">
-        <label>Data fim</label>
-        <input type="date" id="selDtF" onchange="applyFilters()">
-      </div>
-      <div class="cg">
-        <label>Período rápido</label>
-        <select id="selPeriodo" onchange="applyQuickPeriod()">
-          <option value="">Personalizado</option>
-          <option value="thismonth">Mês atual</option>
-          <option value="lastmonth">Mês anterior</option>
-          <option value="trimestre">Trimestre atual</option>
-          <option value="semestre">Semestre atual</option>
-          <option value="thisyear">Ano atual</option>
-          <option value="lastyear">Ano anterior</option>
-        </select>
-      </div>
-      <button class="btn-reset" onclick="resetFilters()">↺ Limpar filtros</button>
     </div>
 
     <!-- INDICADORES -->
