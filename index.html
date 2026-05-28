@@ -1303,6 +1303,11 @@ function openModalFilialRanking() {
     horas: 0, valor: v.total, data: '', cidade: '', uf: ''
   }));
   openModal('🏆 Ranking de Filiais', rows, metricas);
+  const mmFR = document.getElementById('modalMetrics');
+  if (mmFR) {
+    const ctRows = filteredData;
+    mmFR.innerHTML += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px">${contratoCards(ctRows)}</div>`;
+  }
 }
 
 function openModalTotal() {
@@ -1327,6 +1332,9 @@ function openModalTotal() {
       <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${filteredData.length.toLocaleString('pt-BR')}</div></div>
       <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(avgV)}</div></div>
     </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+      ${contratoCards(filteredData)}
+    </div>
   `;
 }
 
@@ -1345,6 +1353,9 @@ function openModalFat() {
       <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
       <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(avgV)}</div></div>
       <div class="modal-metric"><div class="mm-label">Média espera</div><div class="mm-val">${fH(avgH)}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+      ${contratoCards(rows)}
     </div>`;
 }
 
@@ -1358,6 +1369,9 @@ function openModalAg() {
     <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
     <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(total)}</div></div>
     <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? total/rows.length : 0)}</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+    ${contratoCards(rows)}
   </div>`;
 
   // Adiciona coluna Contrato na tabela
@@ -1390,6 +1404,9 @@ function openModalRej() {
     <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
     <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(total)}</div></div>
     <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? total/rows.length : 0)}</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+    ${contratoCards(rows)}
   </div>`;
 }
 
