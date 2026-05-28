@@ -1308,18 +1308,49 @@ function openModalFilialRanking() {
   const total = filteredData.reduce((s,r)=>s+r.valor,0);
   const sorted = Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
   const medals = ['🥇','🥈','🥉'];
-  const metricas = sorted.slice(0,3).map(([f,v],i)=>({ label: medals[i]+' '+f, val: fS(v.total) }));
   const rows = sorted.map(([filial,v]) => ({
     filial, cliente: v.n+' registros', contrato: '', ocorrencia: '',
     status: `${total?Math.round(v.total/total*100):0}%`, placa: '', cte: '', nf: '', ste: '',
     horas: 0, valor: v.total, data: '', cidade: '', uf: ''
   }));
-  openModal('🏆 Ranking de Filiais', rows, metricas);
-  const mmFR = document.getElementById('modalMetrics');
-  if (mmFR) {
-    const ctRows = filteredData;
-    mmFR.innerHTML += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px">${contratoCards(ctRows)}</div>`;
-  }
+
+  openModal('🏆 Ranking de Filiais', rows, [{ label: ' ', val: ' ' }]);
+
+  const mm = document.getElementById('modalMetrics');
+  mm.style.display = 'block';
+
+  // Linha 1: top 3 filiais
+  const top3 = sorted.slice(0,3).map(([f,v],i) => `
+    <div class="modal-metric">
+      <div class="mm-label">${medals[i]} ${f}</div>
+      <div class="mm-val">${fS(v.total)}</div>
+      <div class="mm-sub">${total?Math.round(v.total/total*100):0}% do total · ${v.n} registros</div>
+    </div>`).join('');
+
+  mm.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+      ${top3}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+      ${contratoCards(filteredData)}
+    </div>`;
+
+  // Tabela simples: Posição · Filial · Registros · Total R$ · % do Total
+  document.getElementById('modalColgroup').innerHTML = '<col style="width:6%"><col style="width:25%"><col style="width:15%"><col style="width:25%"><col style="width:15%"><col style="width:14%">';
+  document.getElementById('modalThead').innerHTML = '<tr><th>Pos.</th><th>Filial</th><th>Registros</th><th>Total R$</th><th>% do Total</th><th>Status</th></tr>';
+  document.getElementById('modalTbody').innerHTML = sorted.map(([filial,v],i) => {
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}º`;
+    const pct = total ? parseFloat((v.total/total*100).toFixed(1)) : 0;
+    const badge = pct >= 50 ? 'bf' : pct >= 20 ? 'ba' : 'br';
+    return `<tr>
+      <td style="text-align:center;font-size:14px">${medal}</td>
+      <td style="font-weight:600">${filial}</td>
+      <td>${v.n} registros</td>
+      <td class="vc">${fR(v.total)}</td>
+      <td><span class="badge ${badge}">${pct}%</span></td>
+      <td></td>
+    </tr>`;
+  }).join('');
 }
 
 function openModalTotal() {
