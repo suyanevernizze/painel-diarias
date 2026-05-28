@@ -233,7 +233,7 @@ select::placeholder, input::placeholder { color: var(--tx3); }
 .modal-overlay.open { display: flex; }
 .modal {
   background: var(--sf); border: 1px solid var(--bd2); border-radius: var(--rxl);
-  padding: 2rem; width: 96%; max-width: 1200px; max-height: 90vh;
+  padding: 2rem; width: 98%; max-width: 1400px; max-height: 90vh;
   overflow-y: auto; overflow-x: hidden; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,.6);
 }
 .modal-close {
@@ -251,16 +251,28 @@ select::placeholder, input::placeholder { color: var(--tx3); }
 .mm-label { font-size: 10px; font-weight: 700; color: var(--tx3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
 .mm-val { font-size: 18px; font-weight: 700; color: var(--tx); letter-spacing: -.02em; }
 .mm-sub { font-size: 11px; color: var(--tx3); margin-top: 3px; }
-.modal-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+.modal-table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
 .modal-table th {
-  padding: 8px 10px; text-align: left; font-size: 10px; font-weight: 700;
-  color: var(--tx3); text-transform: uppercase; letter-spacing: .06em;
+  padding: 7px 6px; text-align: left; font-size: 10px; font-weight: 700;
+  color: var(--tx3); text-transform: uppercase; letter-spacing: .04em;
   background: var(--sf2); border-bottom: 1px solid var(--bd);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.modal-table td { padding: 8px 10px; border-bottom: 1px solid var(--bd); color: var(--tx); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modal-table td { padding: 7px 6px; border-bottom: 1px solid var(--bd); color: var(--tx); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modal-table td:last-child { overflow: visible; white-space: nowrap; }
 .modal-table tr:last-child td { border-bottom: none; }
 .modal-table tr:hover td { background: var(--sf2); }
+/* Larguras das colunas do modal: Filial Cliente Cidade Placa CTe NF Ocorrência Horas Total Status */
+.modal-table col:nth-child(1)  { width: 10%; }  /* Filial */
+.modal-table col:nth-child(2)  { width: 13%; }  /* Cliente */
+.modal-table col:nth-child(3)  { width: 9%; }   /* Cidade */
+.modal-table col:nth-child(4)  { width: 8%; }   /* Placa */
+.modal-table col:nth-child(5)  { width: 6%; }   /* CTe */
+.modal-table col:nth-child(6)  { width: 6%; }   /* NF */
+.modal-table col:nth-child(7)  { width: 11%; }  /* Ocorrência */
+.modal-table col:nth-child(8)  { width: 7%; }   /* Horas */
+.modal-table col:nth-child(9)  { width: 11%; }  /* Total R$ */
+.modal-table col:nth-child(10) { width: 12%; }  /* Status — espaço para badge completo */
 
 /* TABLE */
 .table-section { background: var(--sf); border: 1px solid var(--bd); border-radius: var(--rl); overflow: hidden; margin-bottom: 1.5rem; }
@@ -281,7 +293,7 @@ select::placeholder, input::placeholder { color: var(--tx3); }
 }
 .table-search::placeholder { color: var(--tx3); }
 .table-search:focus { border-color: var(--acc); }
-.table-wrap { overflow-x: auto; }
+.table-wrap { overflow-x: hidden; }
 table { width: 100%; border-collapse: collapse; }
 thead th {
   padding: 9px 13px; text-align: left; font-size: 10px; font-weight: 700;
@@ -295,7 +307,7 @@ thead th.sd::after { content: ' ↓'; color: var(--acc); }
 tbody td { padding: 9px 13px; border-bottom: 1px solid var(--bd); font-size: 13px; white-space: nowrap; color: var(--tx); }
 tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover td { background: var(--sf2); }
-.badge { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+.badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
 .bf { background: rgba(46,158,68,.18); color: #5cc96e; border: 1px solid rgba(46,158,68,.3); }
 .ba { background: rgba(240,180,41,.15); color: var(--gold); border: 1px solid rgba(240,180,41,.3); }
 .br { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
@@ -423,7 +435,8 @@ body.light .ms-dropdown { box-shadow: 0 8px 24px rgba(0,0,0,.12); }
     <div class="modal-title" id="modalTitle"></div>
     <div class="modal-metrics" id="modalMetrics"></div>
     <div class="table-wrap">
-      <table>
+      <table class="modal-table">
+        <colgroup id="modalColgroup"></colgroup>
         <thead id="modalThead"></thead>
         <tbody id="modalTbody"></tbody>
       </table>
@@ -1147,7 +1160,7 @@ function renderMetrics() {
       <div class="m-val">${fS(total)}</div>
       <div class="m-sub">${d.length.toLocaleString('pt-BR')} registros</div>
     </div>
-    <div class="metric" style="cursor:default">
+    <div class="metric metric-clickable" onclick="openModalFat()">
       <span class="m-icon">✅</span>
       <div class="m-label">Faturado</div>
       <div class="m-val">${fS(fat)}</div>
@@ -1237,6 +1250,31 @@ function renderFilialRankingCard(d) {
   </div>`;
 }
 
+// ── Helper: quadrantes Frota / Agregado / Terceiro ──
+function contratoCards(rows) {
+  const total = rows.reduce((s,r) => s+r.valor, 0);
+  const frota = rows.filter(r => r.contrato.includes('FROTA')).reduce((s,r)=>s+r.valor,0);
+  const agre  = rows.filter(r => r.contrato.includes('AGREGADO')).reduce((s,r)=>s+r.valor,0);
+  const terc  = rows.filter(r => r.contrato.includes('TERCEIRO')).reduce((s,r)=>s+r.valor,0);
+  const pct   = v => total ? Math.round(v/total*100) : 0;
+  return `
+    <div class="modal-metric" style="border-top:3px solid #378ADD">
+      <div class="mm-label">🚛 Frota</div>
+      <div class="mm-val">${fS(frota)}</div>
+      <div class="mm-sub">${pct(frota)}% do total</div>
+    </div>
+    <div class="modal-metric" style="border-top:3px solid #8b7cf6">
+      <div class="mm-label">🤝 Agregado</div>
+      <div class="mm-val">${fS(agre)}</div>
+      <div class="mm-sub">${pct(agre)}% do total</div>
+    </div>
+    <div class="modal-metric" style="border-top:3px solid #1D9E75">
+      <div class="mm-label">📦 Terceiro</div>
+      <div class="mm-val">${fS(terc)}</div>
+      <div class="mm-sub">${pct(terc)}% do total</div>
+    </div>`;
+}
+
 function openModalRegiao() {
   const map = {};
   filteredData.forEach(r => { if (r.uf) { map[r.uf] = (map[r.uf]||{total:0,n:0}); map[r.uf].total+=r.valor; map[r.uf].n++; } });
@@ -1292,24 +1330,72 @@ function openModalTotal() {
   `;
 }
 
-function openModalAg() {
-  const rows = allData.filter(r => r.status.includes('APROV'));
+function openModalFat() {
+  const rows = filteredData.filter(r => r.status.includes('FATURAD'));
   const total = rows.reduce((s, r) => s + r.valor, 0);
-  openModal('⏳ Ag. Aprovação — Detalhes', rows, [
-    { label: 'Registros', val: rows.length },
-    { label: 'Total R$',  val: fS(total) },
-    { label: 'Ticket médio', val: fS(rows.length ? total / rows.length : 0) }
-  ]);
+  const avgV  = rows.length ? total / rows.length : 0;
+  const avgH  = rows.length ? rows.reduce((s, r) => s + r.horas, 0) / rows.length : 0;
+
+  openModal('✅ Faturado — Detalhes', rows, [{ label: ' ', val: ' ' }]);
+  const mm = document.getElementById('modalMetrics');
+  mm.style.display = 'block';
+  mm.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px">
+      <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(total)}</div></div>
+      <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
+      <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(avgV)}</div></div>
+      <div class="modal-metric"><div class="mm-label">Média espera</div><div class="mm-val">${fH(avgH)}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+      ${contratoCards(rows)}
+    </div>`;
+}
+
+function openModalAg() {
+  const rows  = allData.filter(r => r.status.includes('APROV'));
+  const total = rows.reduce((s, r) => s + r.valor, 0);
+  openModal('⏳ Ag. Aprovação — Detalhes', rows, [{ label: ' ', val: ' ' }]);
+  const mm = document.getElementById('modalMetrics');
+  mm.style.display = 'block';
+  mm.innerHTML = `<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:10px">
+    <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
+    <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(total)}</div></div>
+    <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? total/rows.length : 0)}</div></div>
+    ${contratoCards(rows)}
+  </div>`;
+
+  // Adiciona coluna Contrato na tabela
+  const colWidths = ['8%','11%','8%','6%','5%','5%','9%','7%','9%','8%','9%','9%'];
+  const cg = document.getElementById('modalColgroup');
+  if (cg) cg.innerHTML = colWidths.map(w => `<col style="width:${w}">`).join('');
+  document.getElementById('modalThead').innerHTML = '<tr><th>Data Transp.</th><th>Filial</th><th>Cliente</th><th>Cidade</th><th>Placa</th><th>CTe</th><th>NF</th><th>Ocorrência</th><th>Horas</th><th>Total R$</th><th>Contrato</th><th>Status</th></tr>';
+  document.getElementById('modalTbody').innerHTML = rows.slice(0,200).map(r => {
+    const s = r.status || '';
+    const badge = s.includes('FATURAD') ? 'bf' : s.includes('APROV') ? 'ba' : 'br';
+    const dt = toDate(r.data);
+    const dtStr = dt ? dt.toLocaleDateString('pt-BR') : '—';
+    return `<tr>
+      <td>${dtStr}</td><td>${r.filial||'—'}</td><td>${r.cliente||'—'}</td><td>${r.cidade||'—'}</td>
+      <td>${r.placa||'—'}</td><td>${r.cte||'—'}</td><td>${r.nf||'—'}</td>
+      <td>${r.ocorrencia||'—'}</td><td class="vc">${fH(r.horas||0)}</td>
+      <td class="vc">${fR(r.valor)}</td><td>${r.contrato||'—'}</td>
+      <td><span class="badge ${badge}">${s||'—'}</span></td>
+    </tr>`;
+  }).join('');
 }
 
 function openModalRej() {
   const rows = filteredData.filter(r => r.status.includes('REJEIT'));
   const total = rows.reduce((s, r) => s + r.valor, 0);
-  openModal('❌ Rejeitados — Detalhes', rows, [
-    { label: 'Registros', val: rows.length },
-    { label: 'Total R$',  val: fS(total) },
-    { label: 'Ticket médio', val: fS(rows.length ? total / rows.length : 0) }
-  ]);
+  openModal('❌ Rejeitados — Detalhes', rows, [{ label: ' ', val: ' ' }]);
+  const mm = document.getElementById('modalMetrics');
+  mm.style.display = 'block';
+  mm.innerHTML = `<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:10px">
+    <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
+    <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(total)}</div></div>
+    <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? total/rows.length : 0)}</div></div>
+    ${contratoCards(rows)}
+  </div>`;
 }
 
 function openModalMin() {
@@ -1384,7 +1470,7 @@ function openModal(title, rows, extraMetrics) {
   if (extraMetrics && extraMetrics.length) {
     mm.innerHTML = extraMetrics.map(m =>
       `<div class="modal-metric"><div class="mm-label">${m.label}</div><div class="mm-val">${m.val}</div>${m.sub ? `<div class="mm-sub">${m.sub}</div>` : ''}</div>`
-    ).join('');
+    ).join('') + `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px">${contratoCards(rows)}</div>`;
     mm.style.display = 'grid';
   } else {
     mm.innerHTML = ''; mm.style.display = 'none';
@@ -1395,16 +1481,23 @@ function openModal(title, rows, extraMetrics) {
     document.getElementById('modalOverlay').classList.add('open');
     return;
   }
-  const cols = ['Filial','Cliente','Placa','CTe','NF','Ocorrência','Horas','Total R$','Status'];
-  const keys = ['filial','cliente','placa','cte','nf','ocorrencia','horas','valor','status'];
+  const cols = ['Data Transporte','Filial','Cliente','Cidade','Placa','CTe','NF','Ocorrência','Horas','Total R$','Status'];
+  const keys = ['data','filial','cliente','cidade','placa','cte','nf','ocorrencia','horas','valor','status'];
+  // Larguras: DataTransp Filial Cliente Cidade Placa CTe NF Ocorrência Horas Total Status
+  const colWidths = ['9%','9%','12%','8%','7%','5%','5%','10%','6%','10%','10%'];
+  const cg = document.getElementById('modalColgroup');
+  if (cg) cg.innerHTML = colWidths.map(w => `<col style="width:${w}">`).join('');
   document.getElementById('modalThead').innerHTML = '<tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
   document.getElementById('modalTbody').innerHTML = rows.slice(0, 200).map(r => {
     const s = r.status || '';
     const badge = s.includes('FATURAD') ? 'bf' : s.includes('APROV') ? 'ba' : 'br';
+    const dt = toDate(r.data);
+    const dtStr = dt ? dt.toLocaleDateString('pt-BR') : '—';
     return '<tr>' + keys.map((k, i) =>
-      i === 8 ? `<td><span class="badge ${badge}">${s || '—'}</span></td>` :
-      i === 6 ? `<td class="vc">${fH(r.horas || 0)}</td>` :
-      i === 7 ? `<td class="vc">${fR(r.valor)}</td>` :
+      i === 10 ? `<td><span class="badge ${badge}">${s || '—'}</span></td>` :
+      i === 8  ? `<td class="vc">${fH(r.horas || 0)}</td>` :
+      i === 9  ? `<td class="vc">${fR(r.valor)}</td>` :
+      i === 0  ? `<td>${dtStr}</td>` :
                `<td>${r[k] || '—'}</td>`
     ).join('') + '</tr>';
   }).join('');
