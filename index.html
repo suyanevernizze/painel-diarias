@@ -1345,9 +1345,6 @@ function openModalFat() {
       <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
       <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(avgV)}</div></div>
       <div class="modal-metric"><div class="mm-label">Média espera</div><div class="mm-val">${fH(avgH)}</div></div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
-      ${contratoCards(rows)}
     </div>`;
 }
 
@@ -1361,7 +1358,6 @@ function openModalAg() {
     <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
     <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(total)}</div></div>
     <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? total/rows.length : 0)}</div></div>
-    ${contratoCards(rows)}
   </div>`;
 
   // Adiciona coluna Contrato na tabela
@@ -1394,7 +1390,6 @@ function openModalRej() {
     <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
     <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(total)}</div></div>
     <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? total/rows.length : 0)}</div></div>
-    ${contratoCards(rows)}
   </div>`;
 }
 
@@ -1470,7 +1465,7 @@ function openModal(title, rows, extraMetrics) {
   if (extraMetrics && extraMetrics.length) {
     mm.innerHTML = extraMetrics.map(m =>
       `<div class="modal-metric"><div class="mm-label">${m.label}</div><div class="mm-val">${m.val}</div>${m.sub ? `<div class="mm-sub">${m.sub}</div>` : ''}</div>`
-    ).join('') + `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px">${contratoCards(rows)}</div>`;
+    ).join('');
     mm.style.display = 'grid';
   } else {
     mm.innerHTML = ''; mm.style.display = 'none';
@@ -1555,9 +1550,6 @@ function mkDonut(id, labels, vals, colors, field) {
               <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
               <div class="modal-metric"><div class="mm-label">Média espera</div><div class="mm-val">${fH(avgH)}</div></div>
               <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? tot/rows.length : 0)}</div></div>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
-              ${contratoCards(sortedRows)}
             </div>`;
         } else {
           openModal(title, sortedRows, [{ label: ' ', val: ' ' }]);
@@ -1569,9 +1561,6 @@ function mkDonut(id, labels, vals, colors, field) {
             <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
             <div class="modal-metric"><div class="mm-label">Média espera</div><div class="mm-val">${fH(avgH)}</div></div>
             <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? tot/rows.length : 0)}</div></div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
-            ${contratoCards(sortedRows)}
           </div>`;
         }
       }
@@ -1673,9 +1662,6 @@ function renderCharts() {
             <div class="modal-metric"><div class="mm-label">Ocorrências</div><div class="mm-val">${rows.length}</div></div>
             <div class="modal-metric"><div class="mm-label">Média espera</div><div class="mm-val">${fH(avgH)}</div></div>
             <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? tot/rows.length : 0)}</div></div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
-            ${contratoCards(sortedRows)}
           </div>`;
       }
     }
@@ -1730,9 +1716,6 @@ function renderCharts() {
             <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
             <div class="modal-metric"><div class="mm-label">Média espera</div><div class="mm-val">${fH(avgH)}</div></div>
             <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? tot/rows.length : 0)}</div></div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
-            ${contratoCards(sortedRows)}
           </div>`;
       }
     }
@@ -1846,9 +1829,6 @@ function renderCharts() {
               <div class="modal-metric"><div class="mm-label">Faturado</div><div class="mm-val">${fS(fat)}</div></div>
               <div class="modal-metric"><div class="mm-label">Ag. Aprovação</div><div class="mm-val">${fS(ag)}</div></div>
               <div class="modal-metric"><div class="mm-label">Rejeitado</div><div class="mm-val">${fS(rej)}</div></div>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
-              ${contratoCards(sortedRows)}
             </div>`;
         }
       }
