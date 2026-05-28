@@ -1365,10 +1365,10 @@ function openModalAg() {
   </div>`;
 
   // Adiciona coluna Contrato na tabela
-  const colWidths = ['8%','11%','8%','6%','5%','5%','9%','7%','9%','8%','9%','9%'];
+  const colWidths = ['9%','9%','13%','9%','8%','9%','6%','12%','7%','10%','9%'];
   const cg = document.getElementById('modalColgroup');
   if (cg) cg.innerHTML = colWidths.map(w => `<col style="width:${w}">`).join('');
-  document.getElementById('modalThead').innerHTML = '<tr><th>Data Transp.</th><th>Filial</th><th>Cliente</th><th>Cidade</th><th>Placa</th><th>Contrato</th><th>CTe</th><th>NF</th><th>Ocorrência</th><th>Horas</th><th>Total R$</th><th>Status</th></tr>';
+  document.getElementById('modalThead').innerHTML = '<tr><th>Data Transp.</th><th>Filial</th><th>Cliente</th><th>Cidade</th><th>Placa</th><th>Contrato</th><th>CTe</th><th>Ocorrência</th><th>Horas</th><th>Total R$</th><th>Status</th></tr>';
   document.getElementById('modalTbody').innerHTML = rows.slice(0,200).map(r => {
     const s = r.status || '';
     const badge = s.includes('FATURAD') ? 'bf' : s.includes('APROV') ? 'ba' : 'br';
@@ -1376,7 +1376,7 @@ function openModalAg() {
     const dtStr = dt ? dt.toLocaleDateString('pt-BR') : '—';
     return `<tr>
       <td>${dtStr}</td><td>${r.filial||'—'}</td><td>${r.cliente||'—'}</td><td>${r.cidade||'—'}</td>
-      <td>${r.placa||'—'}</td><td>${r.contrato||'—'}</td><td>${r.cte||'—'}</td><td>${r.nf||'—'}</td>
+      <td>${r.placa||'—'}</td><td>${r.contrato||'—'}</td><td>${r.cte||'—'}</td>
       <td>${r.ocorrencia||'—'}</td><td class="vc">${fH(r.horas||0)}</td>
       <td class="vc">${fR(r.valor)}</td>
       <td><span class="badge ${badge}">${s||'—'}</span></td>
@@ -1481,10 +1481,10 @@ function openModal(title, rows, extraMetrics) {
     document.getElementById('modalOverlay').classList.add('open');
     return;
   }
-  const cols = ['Data Transporte','Filial','Cliente','Cidade','Placa','Contrato','CTe','NF','Ocorrência','Horas','Total R$','Status'];
-  const keys = ['data','filial','cliente','cidade','placa','contrato','cte','nf','ocorrencia','horas','valor','status'];
-  // Larguras: DataTransp Filial Cliente Cidade Placa Contrato CTe NF Ocorrência Horas Total Status
-  const colWidths = ['8%','8%','11%','7%','7%','8%','5%','5%','9%','6%','9%','9%'];
+  const cols = ['Data Transporte','Filial','Cliente','Cidade','Placa','Contrato','CTe','Ocorrência','Horas','Total R$','Status'];
+  const keys = ['data','filial','cliente','cidade','placa','contrato','cte','ocorrencia','horas','valor','status'];
+  // Larguras: DataTransp Filial Cliente Cidade Placa Contrato CTe Ocorrência Horas Total Status
+  const colWidths = ['9%','9%','13%','9%','8%','9%','6%','12%','7%','10%','9%'];
   const cg = document.getElementById('modalColgroup');
   if (cg) cg.innerHTML = colWidths.map(w => `<col style="width:${w}">`).join('');
   document.getElementById('modalThead').innerHTML = '<tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
@@ -1494,9 +1494,9 @@ function openModal(title, rows, extraMetrics) {
     const dt = toDate(r.data);
     const dtStr = dt ? dt.toLocaleDateString('pt-BR') : '—';
     return '<tr>' + keys.map((k, i) =>
-      i === 11 ? `<td><span class="badge ${badge}">${s || '—'}</span></td>` :
-      i === 9  ? `<td class="vc">${fH(r.horas || 0)}</td>` :
-      i === 10 ? `<td class="vc">${fR(r.valor)}</td>` :
+      i === 10 ? `<td><span class="badge ${badge}">${s || '—'}</span></td>` :
+      i === 8  ? `<td class="vc">${fH(r.horas || 0)}</td>` :
+      i === 9  ? `<td class="vc">${fR(r.valor)}</td>` :
       i === 0  ? `<td>${dtStr}</td>` :
                `<td>${r[k] || '—'}</td>`
     ).join('') + '</tr>';
