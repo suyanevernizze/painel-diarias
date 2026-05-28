@@ -1640,12 +1640,20 @@ function renderCharts() {
         });
         const tot  = rows.reduce((s, r) => s + r.valor, 0);
         const avgH = rows.length ? rows.reduce((s, r) => s + r.horas, 0) / rows.length : 0;
-        openModal('Mês: ' + lbl, [...rows].sort((a, b) => b.valor - a.valor), [
-          { label: 'Total R$',      val: fS(tot) },
-          { label: 'Ocorrências',   val: rows.length },
-          { label: 'Média espera',  val: fH(avgH) },
-          { label: 'Ticket médio',  val: fS(rows.length ? tot / rows.length : 0) }
-        ]);
+        const sortedRows = [...rows].sort((a, b) => b.valor - a.valor);
+        openModal('Mês: ' + lbl, sortedRows, [{ label: ' ', val: ' ' }]);
+        const mm = document.getElementById('modalMetrics');
+        mm.style.display = 'block';
+        mm.innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px">
+            <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(tot)}</div></div>
+            <div class="modal-metric"><div class="mm-label">Ocorrências</div><div class="mm-val">${rows.length}</div></div>
+            <div class="modal-metric"><div class="mm-label">Média espera</div><div class="mm-val">${fH(avgH)}</div></div>
+            <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? tot/rows.length : 0)}</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+            ${contratoCards(sortedRows)}
+          </div>`;
       }
     }
   });
@@ -1685,15 +1693,24 @@ function renderCharts() {
       },
       onClick: (evt, el) => {
         if (!el.length) return;
-        const cli  = cK[el[0].index];
-        const tot  = rows.reduce((s, r) => s + r.valor, 0);
-        const avgH = rows.length ? rows.reduce((s, r) => s + r.horas, 0) / rows.length : 0;
-        openModal('Cliente: ' + cli, [...rows].sort((a, b) => b.valor - a.valor), [
-          { label: 'Total R$',     val: fS(tot) },
-          { label: 'Registros',    val: rows.length },
-          { label: 'Média espera', val: fH(avgH) },
-          { label: 'Ticket médio', val: fS(rows.length ? tot / rows.length : 0) }
-        ]);
+        const cli   = cK[el[0].index];
+        const rows  = filteredData.filter(r => r.cliente.trim() === cli);
+        const tot   = rows.reduce((s, r) => s + r.valor, 0);
+        const avgH  = rows.length ? rows.reduce((s, r) => s + r.horas, 0) / rows.length : 0;
+        const sortedRows = [...rows].sort((a, b) => b.valor - a.valor);
+        openModal('Cliente: ' + cli, sortedRows, [{ label: ' ', val: ' ' }]);
+        const mm = document.getElementById('modalMetrics');
+        mm.style.display = 'block';
+        mm.innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px">
+            <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(tot)}</div></div>
+            <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
+            <div class="modal-metric"><div class="mm-label">Média espera</div><div class="mm-val">${fH(avgH)}</div></div>
+            <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? tot/rows.length : 0)}</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+            ${contratoCards(sortedRows)}
+          </div>`;
       }
     }
   });
