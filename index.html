@@ -6,6 +6,7 @@
   <title>Binotto — Painel de Diárias</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
@@ -509,7 +510,7 @@ footer {
         Evolução mensal — Total R$ e Quantidade de ocorrências
         <span style="font-size:10px;color:var(--tx3);font-weight:400">&nbsp;(clique em uma barra para ver detalhes do mês)</span>
       </div>
-      <div class="chart-clickable" style="position:relative;height:290px">
+      <div class="chart-clickable" style="position:relative;height:360px">
         <canvas id="cMensal"></canvas>
       </div>
     </div>
@@ -613,6 +614,12 @@ const PS = 50;
 let CH = {};
 const COLORS = ['#2e9e44','#f0b429','#378ADD','#D85A30','#8b7cf6','#1D9E75','#e8843a','#d4537e','#ef4444','#4caf60'];
 
+// Registra plugin datalabels mas desabilita globalmente (habilita só no gráfico mensal)
+if (window.ChartDataLabels) {
+  Chart.register(ChartDataLabels);
+  Chart.defaults.set('plugins.datalabels', { display: false });
+}
+
 // ── TEMA ──
 function toggleTheme() {
   const isLight = document.body.classList.toggle('light');
@@ -649,7 +656,15 @@ const fS = v => (Number(v) || 0).toLocaleString('pt-BR', {
   minimumFractionDigits: 2, maximumFractionDigits: 2
 });
 
-// Formata valor abreviado para indicadores (ex: R$ 1,2M · R$ 25,4K)
+// Formata horas decimais em HhMM real (ex: 23.8333 -> "23h50")
+const fH = h => {
+  const total = Math.round((h || 0) * 60);
+  const hh = Math.floor(total / 60);
+  const mm = String(total % 60).padStart(2, '0');
+  return `${hh}h${mm}`;
+};
+
+// Formata valor abreviado para indicadores
 const fA = v => {
   const n = Number(v) || 0;
   if (n >= 1e9) return 'R$ ' + (n/1e9).toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1}) + 'B';
@@ -1036,19 +1051,19 @@ function renderMetrics() {
     <div class="metric c-blue metric-clickable" onclick="openModalMinH()">
       <span class="m-icon">🕐</span>
       <div class="m-label">Menor espera</div>
-      <div class="m-val">${minH.toFixed(1)}h <span style="font-size:12px;font-weight:400;color:var(--tx2)">${Math.floor(minH/24)}d ${(minH%24).toFixed(1)}h</span></div>
+      <div class="m-val">${fH(minH)} <span style="font-size:12px;font-weight:400;color:var(--tx2)">${Math.floor(minH/24)}d ${fH(minH%24)}</span></div>
       <div class="m-sub">${rMinH ? rMinH.cliente || rMinH.filial : '—'}</div>
     </div>
     <div class="metric c-gold metric-clickable" onclick="openModalMaxH()">
       <span class="m-icon">🕙</span>
       <div class="m-label">Maior espera</div>
-      <div class="m-val">${maxH.toFixed(1)}h <span style="font-size:12px;font-weight:400;color:var(--tx2)">${Math.floor(maxH/24)}d ${(maxH%24).toFixed(1)}h</span></div>
+      <div class="m-val">${fH(maxH)} <span style="font-size:12px;font-weight:400;color:var(--tx2)">${Math.floor(maxH/24)}d ${fH(maxH%24)}</span></div>
       <div class="m-sub">${rMaxH ? rMaxH.cliente || rMaxH.filial : '—'}</div>
     </div>
     <div class="metric c-purple" style="cursor:default">
       <span class="m-icon">⏱️</span>
       <div class="m-label">Média de espera</div>
-      <div class="m-val">${avgH.toFixed(1)}h <span style="font-size:12px;font-weight:400;color:var(--tx2)">${Math.floor(avgH/24)}d ${(avgH%24).toFixed(1)}h</span></div>
+      <div class="m-val">${fH(avgH)} <span style="font-size:12px;font-weight:400;color:var(--tx2)">${Math.floor(avgH/24)}d ${fH(avgH%24)}</span></div>
       <div class="m-sub">por ocorrência</div>
     </div>
     <div class="metric metric-clickable" style="border-top:3px solid #378ADD" onclick="openModalContrato('FROTA')">
@@ -1208,7 +1223,7 @@ function openModalMinH() {
   const minH = hs.length ? Math.min(...hs) : 0;
   const row  = filteredData.find(r => r.horas === minH);
   openModal('🕐 Menor Espera — Detalhes', row ? [row] : [], [
-    { label: 'Horas',      val: minH.toFixed(1) + 'h' },
+    { label: 'Horas',      val: fH(minH) },
     { label: 'Cliente',    val: row ? row.cliente    || '—' : '—' },
     { label: 'Filial',     val: row ? row.filial     || '—' : '—' },
     { label: 'Ocorrência', val: row ? row.ocorrencia || '—' : '—' }
@@ -1220,7 +1235,7 @@ function openModalMaxH() {
   const maxH = hs.length ? Math.max(...hs) : 0;
   const row  = filteredData.find(r => r.horas === maxH);
   openModal('🕙 Maior Espera — Detalhes', row ? [row] : [], [
-    { label: 'Horas',      val: maxH.toFixed(1) + 'h' },
+    { label: 'Horas',      val: fH(maxH) },
     { label: 'Cliente',    val: row ? row.cliente    || '—' : '—' },
     { label: 'Filial',     val: row ? row.filial     || '—' : '—' },
     { label: 'Ocorrência', val: row ? row.ocorrencia || '—' : '—' }
@@ -1253,7 +1268,7 @@ function openModal(title, rows, extraMetrics) {
     const badge = s.includes('FATURAD') ? 'bf' : s.includes('APROV') ? 'ba' : 'br';
     return '<tr>' + keys.map((k, i) =>
       i === 8 ? `<td><span class="badge ${badge}">${s || '—'}</span></td>` :
-      i === 6 ? `<td class="vc">${(r.horas || 0).toFixed(1)}h</td>` :
+      i === 6 ? `<td class="vc">${fH(r.horas || 0)}</td>` :
       i === 7 ? `<td class="vc">${fR(r.valor)}</td>` :
                `<td>${r[k] || '—'}</td>`
     ).join('') + '</tr>';
@@ -1271,6 +1286,8 @@ function dc(id) { if (CH[id]) { CH[id].destroy(); delete CH[id]; } }
 
 function mkDonut(id, labels, vals, colors, field) {
   dc(id);
+  const total = vals.reduce((a, b) => a + b, 0);
+  const isLight = document.body.classList.contains('light');
   CH[id] = new Chart(document.getElementById(id), {
     type: 'doughnut',
     data: { labels, datasets: [{ data: vals, backgroundColor: colors, borderWidth: 2, borderColor: 'transparent', hoverOffset: 8 }] },
@@ -1278,7 +1295,18 @@ function mkDonut(id, labels, vals, colors, field) {
       responsive: true, maintainAspectRatio: false, cutout: '62%',
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: ctx => fR(ctx.raw) + ' (' + Math.round(ctx.raw / (vals.reduce((a, b) => a + b, 1)) * 100) + '%)' } }
+        tooltip: { callbacks: { label: ctx => fR(ctx.raw) + ' (' + Math.round(ctx.raw / total * 100) + '%)' } },
+        datalabels: {
+          display: ctx => (ctx.dataset.data[ctx.dataIndex] / total) >= 0.04,
+          formatter: (v, ctx) => {
+            const pct = Math.round(v / total * 100);
+            return pct + '%';
+          },
+          color: '#fff',
+          font: { size: 11, weight: '700' },
+          textStrokeColor: 'rgba(0,0,0,.4)',
+          textStrokeWidth: 2,
+        }
       },
       onClick: (evt, el) => {
         if (!el.length) return;
@@ -1291,7 +1319,7 @@ function mkDonut(id, labels, vals, colors, field) {
           [
             { label: 'Total R$',     val: fS(tot) },
             { label: 'Registros',    val: rows.length },
-            { label: 'Média espera', val: avgH.toFixed(1) + 'h' },
+            { label: 'Média espera', val: fH(avgH) },
             { label: 'Ticket médio', val: fS(rows.length ? tot / rows.length : 0) }
           ]
         );
@@ -1319,25 +1347,60 @@ function renderCharts() {
     return ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][+m - 1] + '/' + y.slice(2);
   });
   dc('cMensal');
+  const isLight = document.body.classList.contains('light');
+  const gridColor = isLight ? 'rgba(0,0,0,.06)' : 'rgba(45,82,56,.4)';
+  const tickColor = isLight ? '#2d7a3a' : '#4d7a58';
+  const tickColor2 = isLight ? '#b45309' : '#f0b429';
+  const legendColor = isLight ? '#1a5e26' : '#7aaa86';
+
   CH['cMensal'] = new Chart(document.getElementById('cMensal'), {
     data: {
       labels: mL,
       datasets: [
-        { type: 'bar',  label: 'Total R$',     data: mV, backgroundColor: 'rgba(30,125,50,.75)', borderColor: '#2e9e44', borderWidth: 1, borderRadius: 6, yAxisID: 'y' },
-        { type: 'line', label: 'Ocorrências',  data: mQ, borderColor: '#f0b429', backgroundColor: 'rgba(240,180,41,.1)', pointBackgroundColor: '#f0b429', pointRadius: 5, pointHoverRadius: 7, tension: .35, fill: true, yAxisID: 'y2' }
+        {
+          type: 'bar', label: 'Total R$', data: mV,
+          backgroundColor: 'rgba(30,125,50,.75)', borderColor: '#2e9e44',
+          borderWidth: 1, borderRadius: 6, yAxisID: 'y',
+          datalabels: {
+            anchor: 'end', align: 'end', offset: 4,
+            backgroundColor: isLight ? 'rgba(255,255,255,.9)' : 'rgba(10,30,13,.85)',
+            borderRadius: 4,
+            padding: { top: 2, bottom: 2, left: 5, right: 5 },
+            color: isLight ? '#0d5c1a' : '#a7f3b4',
+            font: { size: 10, weight: '700' },
+            formatter: v => fS(v)
+          }
+        },
+        {
+          type: 'line', label: 'Ocorrências', data: mQ,
+          borderColor: '#f0b429', backgroundColor: 'rgba(240,180,41,.1)',
+          pointBackgroundColor: '#f0b429', pointRadius: 5, pointHoverRadius: 7,
+          tension: .35, fill: true, yAxisID: 'y2',
+          datalabels: {
+            anchor: 'top', align: 'top', offset: 8,
+            backgroundColor: isLight ? 'rgba(255,255,255,.9)' : 'rgba(10,30,13,.85)',
+            borderRadius: 4,
+            padding: { top: 2, bottom: 2, left: 5, right: 5 },
+            color: isLight ? '#92400e' : '#fcd34d',
+            font: { size: 10, weight: '700' },
+            formatter: v => v + ' oc.'
+          }
+        }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
+      layout: { padding: { top: 32, right: 16 } },
       plugins: {
-        legend: { display: true, labels: { color: '#7aaa86', boxWidth: 12, font: { size: 11 } } },
-        tooltip: { callbacks: { label: ctx => ctx.datasetIndex === 0 ? fR(ctx.raw) : ctx.raw + ' ocorr.' } }
+        legend: { display: true, labels: { color: legendColor, boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ctx.datasetIndex === 0 ? fR(ctx.raw) : ctx.raw + ' ocorr.' } },
+        datalabels: { display: true }
       },
       scales: {
-        x:  { ticks: { color: '#4d7a58', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(45,82,56,.4)' } },
-        y:  { ticks: { callback: v => fS(v), color: '#4d7a58', font: { size: 9 } }, grid: { color: 'rgba(45,82,56,.4)' } },
-        y2: { position: 'right', ticks: { color: '#f0b429', font: { size: 9 } }, grid: { display: false } }
+        x:  { ticks: { color: tickColor, font: { size: 10 }, maxRotation: 45 }, grid: { color: gridColor } },
+        y:  { ticks: { callback: v => v >= 1e6 ? 'R$'+(v/1e6).toFixed(1)+'M' : 'R$'+(v/1e3).toFixed(0)+'k', color: tickColor, font: { size: 9 } }, grid: { color: gridColor } },
+        y2: { position: 'right', ticks: { color: tickColor2, font: { size: 9 } }, grid: { display: false } }
       },
       onClick: (evt, el) => {
         if (!el.length) return;
@@ -1352,7 +1415,7 @@ function renderCharts() {
         openModal('Mês: ' + lbl, [...rows].sort((a, b) => b.valor - a.valor), [
           { label: 'Total R$',      val: fS(tot) },
           { label: 'Ocorrências',   val: rows.length },
-          { label: 'Média espera',  val: avgH.toFixed(1) + 'h' },
+          { label: 'Média espera',  val: fH(avgH) },
           { label: 'Ticket médio',  val: fS(rows.length ? tot / rows.length : 0) }
         ]);
       }
@@ -1370,28 +1433,37 @@ function renderCharts() {
     type: 'bar',
     data: {
       labels: cK,
-      datasets: [{ data: cV, backgroundColor: COLORS.slice(0, cK.length).map(c => c + 'bb'), borderColor: COLORS.slice(0, cK.length), borderWidth: 1, borderRadius: 4, hoverBorderWidth: 2 }]
+      datasets: [{ data: cV, backgroundColor: COLORS.slice(0, cK.length).map(c => c + 'bb'), borderColor: COLORS.slice(0, cK.length), borderWidth: 1, borderRadius: 4, hoverBorderWidth: 2,
+      datalabels: {
+        anchor: 'end', align: 'end', offset: 4,
+        backgroundColor: isLight ? 'rgba(255,255,255,.9)' : 'rgba(10,30,13,.85)',
+        borderRadius: 4, padding: { top: 2, bottom: 2, left: 5, right: 5 },
+        color: isLight ? '#0d5c1a' : '#a7f3b4',
+        font: { size: 10, weight: '700' },
+        formatter: v => fS(v)
+      }
+    }]
     },
     options: {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: ctx => fR(ctx.raw) } }
+        tooltip: { callbacks: { label: ctx => fR(ctx.raw) } },
+        datalabels: { display: true }
       },
       scales: {
-        x: { ticks: { callback: v => fS(v), color: '#4d7a58', font: { size: 9 } }, grid: { color: 'rgba(45,82,56,.4)' } },
-        y: { ticks: { color: '#7aaa86', font: { size: 10 } } }
+        x: { ticks: { callback: v => fS(v), color: tickColor, font: { size: 9 } }, grid: { color: gridColor } },
+        y: { ticks: { color: isLight ? '#1a5e26' : '#7aaa86', font: { size: 10 } } }
       },
       onClick: (evt, el) => {
         if (!el.length) return;
         const cli  = cK[el[0].index];
-        const rows = filteredData.filter(r => r.cliente.trim() === cli);
         const tot  = rows.reduce((s, r) => s + r.valor, 0);
         const avgH = rows.length ? rows.reduce((s, r) => s + r.horas, 0) / rows.length : 0;
         openModal('Cliente: ' + cli, [...rows].sort((a, b) => b.valor - a.valor), [
           { label: 'Total R$',     val: fS(tot) },
           { label: 'Registros',    val: rows.length },
-          { label: 'Média espera', val: avgH.toFixed(1) + 'h' },
+          { label: 'Média espera', val: fH(avgH) },
           { label: 'Ticket médio', val: fS(rows.length ? tot / rows.length : 0) }
         ]);
       }
@@ -1452,7 +1524,15 @@ function renderCharts() {
           backgroundColor: ufK.map((_,i) => ufColors[i % ufColors.length]),
           hoverBackgroundColor: ufK.map((_,i) => ufColors[i % ufColors.length] + 'cc'),
           borderRadius: 5,
-          borderSkipped: false
+          borderSkipped: false,
+          datalabels: {
+            anchor: 'end', align: 'end', offset: 4,
+            backgroundColor: isLight ? 'rgba(255,255,255,.9)' : 'rgba(10,30,13,.85)',
+            borderRadius: 4, padding: { top: 2, bottom: 2, left: 5, right: 5 },
+            color: isLight ? '#0d5c1a' : '#a7f3b4',
+            font: { size: 10, weight: '700' },
+            formatter: v => fS(v)
+          }
         }]
       },
       options: {
@@ -1471,10 +1551,11 @@ function renderCharts() {
                 return `  ${rows.length} registros · ${pct}% do total`;
               }
             }
-          }
+          },
+          datalabels: { display: true }
         },
         scales: {
-          x: { ticks: { color: '#4d7a58', callback: v => 'R$' + (v>=1e6?(v/1e6).toFixed(1)+'M':(v/1000).toFixed(0)+'k') }, grid: { color: '#1d2f20' } },
+          x: { ticks: { color: tickColor, callback: v => 'R$' + (v>=1e6?(v/1e6).toFixed(1)+'M':(v/1000).toFixed(0)+'k') }, grid: { color: gridColor } },
           y: { ticks: { color: '#7aaa86', font: { size: 12 } }, grid: { display: false } }
         },
         onClick: (e, els) => {
@@ -1507,7 +1588,7 @@ function renderTable() {
     const ri = allData.indexOf(r), s = r.status || '';
     const badge = s.includes('FATURAD') ? 'bf' : s.includes('APROV') ? 'ba' : 'br';
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${r.filial||'—'}</td><td>${r.cliente||'—'}</td><td>${r.placa||'—'}</td><td>${r.cte||'—'}</td><td>${r.nf||'—'}</td><td>${r.ste||'—'}</td><td>${r.contrato||'—'}</td><td>${r.ocorrencia||'—'}</td><td class="vc">${(r.horas||0).toFixed(1)}h</td><td class="vc">${fR(r.valor)}</td><td><span class="badge ${badge}">${s||'—'}</span></td>`;
+    tr.innerHTML = `<td>${r.filial||'—'}</td><td>${r.cliente||'—'}</td><td>${r.placa||'—'}</td><td>${r.cte||'—'}</td><td>${r.nf||'—'}</td><td>${r.ste||'—'}</td><td>${r.contrato||'—'}</td><td>${r.ocorrencia||'—'}</td><td class="vc">${fH(r.horas||0)}</td><td class="vc">${fR(r.valor)}</td><td><span class="badge ${badge}">${s||'—'}</span></td>`;
     tb.appendChild(tr);
   });
   const pg = document.getElementById('pagination');
