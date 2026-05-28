@@ -204,6 +204,7 @@ select::placeholder, input::placeholder { color: var(--tx3); }
   content: ''; position: absolute; top: 0; left: 0; right: 0;
   height: 3px; border-radius: 3px 3px 0 0; background: var(--g400);
 }
+.metric.c-thick::before { height: 6px !important; border-radius: 3px 3px 0 0; }
 .metric.c-amber::before { background: var(--gold); }
 .metric.c-blue::before { background: var(--blue); }
 .metric.c-gold::before { background: var(--gold); }
@@ -399,12 +400,15 @@ footer {
 body.light .ms-dropdown { box-shadow: 0 8px 24px rgba(0,0,0,.12); }
 
 /* Cores customizadas dos indicadores */
-.metric.c-emerald::before  { background: #10b981; }
+.metric.c-emerald::before  { background: #145222; }
 .metric.c-pink::before     { background: #ec4899; }
 .metric.c-cyan::before     { background: #06b6d4; }
 .metric.c-orange::before   { background: #f97316; }
 .metric.c-sky::before      { background: #0ea5e9; }
 .metric.c-yellow::before   { background: #eab308; }
+
+/* Indicadores com border-top inline — remove ::before para evitar faixa dupla */
+.metric[style*="border-top"]::before { display: none !important; }
 
 </style>
 </head>
@@ -1168,7 +1172,7 @@ function renderMetrics() {
       <div class="m-val">${fS(total)}</div>
       <div class="m-sub">${d.length.toLocaleString('pt-BR')} registros</div>
     </div>
-    <div class="metric metric-clickable c-emerald" onclick="openModalFat()">
+    <div class="metric metric-clickable" onclick="openModalFat()">
       <span class="m-icon">✅</span>
       <div class="m-label">Faturado</div>
       <div class="m-val">${fS(fat)}</div>
@@ -1222,19 +1226,19 @@ function renderMetrics() {
       <div class="m-val">${fH(avgH)} <span style="font-size:12px;font-weight:400;color:var(--tx2)">${Math.floor(avgH/24)}d ${fH(avgH%24)}</span></div>
       <div class="m-sub">por ocorrência</div>
     </div>
-    <div class="metric metric-clickable" style="border-top:3px solid #378ADD" onclick="openModalContrato('FROTA')">
+    <div class="metric metric-clickable" style="border-top:6px solid #2e9e44" onclick="openModalContrato('FROTA')">
       <span class="m-icon">🚛</span>
       <div class="m-label">Frota</div>
       <div class="m-val">${fS(frotaTotal)}</div>
       <div class="m-sub">${pct(frotaTotal)}% do total &nbsp;·&nbsp; ${frotaRows.length} registros</div>
     </div>
-    <div class="metric metric-clickable c-pink" onclick="openModalContrato('AGREGADO')">
+    <div class="metric metric-clickable" style="border-top:6px solid #ec4899" onclick="openModalContrato('AGREGADO')">
       <span class="m-icon">🤝</span>
       <div class="m-label">Agregado</div>
       <div class="m-val">${fS(agregTotal)}</div>
       <div class="m-sub">${pct(agregTotal)}% do total &nbsp;·&nbsp; ${agregRows.length} registros</div>
     </div>
-    <div class="metric metric-clickable c-sky" onclick="openModalContrato('TERCEIRO')">
+    <div class="metric metric-clickable" style="border-top:6px solid #0ea5e9" onclick="openModalContrato('TERCEIRO')">
       <span class="m-icon">📦</span>
       <div class="m-label">Terceiro</div>
       <div class="m-val">${fS(tercTotal)}</div>
