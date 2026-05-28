@@ -398,6 +398,14 @@ footer {
 .ms-option.selected { color: var(--acc); }
 body.light .ms-dropdown { box-shadow: 0 8px 24px rgba(0,0,0,.12); }
 
+/* Cores customizadas dos indicadores */
+.metric.c-emerald::before  { background: #10b981; }
+.metric.c-pink::before     { background: #ec4899; }
+.metric.c-cyan::before     { background: #06b6d4; }
+.metric.c-orange::before   { background: #f97316; }
+.metric.c-sky::before      { background: #0ea5e9; }
+.metric.c-yellow::before   { background: #eab308; }
+
 </style>
 </head>
 <body>
@@ -1160,7 +1168,7 @@ function renderMetrics() {
       <div class="m-val">${fS(total)}</div>
       <div class="m-sub">${d.length.toLocaleString('pt-BR')} registros</div>
     </div>
-    <div class="metric metric-clickable" onclick="openModalFat()" style="border-top:3px solid #10b981 !important">
+    <div class="metric metric-clickable c-emerald" onclick="openModalFat()">
       <span class="m-icon">✅</span>
       <div class="m-label">Faturado</div>
       <div class="m-val">${fS(fat)}</div>
@@ -1178,7 +1186,7 @@ function renderMetrics() {
       <div class="m-val">${fS(rej)}</div>
       <div class="m-sub">${rejRows.length} registros</div>
     </div>
-    <div class="metric c-teal" style="cursor:default;border-top:3px solid #14b8a6 !important">
+    <div class="metric c-teal" style="cursor:default">
       <span class="m-icon">📊</span>
       <div class="m-label">Ticket médio</div>
       <div class="m-val">${fS(avgV)}</div>
@@ -1190,19 +1198,19 @@ function renderMetrics() {
       <div class="m-val">${fS(minV)}</div>
       <div class="m-sub">${rMinV ? rMinV.cliente || rMinV.filial : '—'}</div>
     </div>
-    <div class="metric c-gold metric-clickable" onclick="openModalMax()" style="border-top:3px solid #ec4899 !important">
+    <div class="metric metric-clickable c-pink" onclick="openModalMax()">
       <span class="m-icon">🔼</span>
       <div class="m-label">Maior diária</div>
       <div class="m-val">${fS(maxV)}</div>
       <div class="m-sub">${rMaxV ? rMaxV.cliente || rMaxV.filial : '—'}</div>
     </div>
-    <div class="metric c-blue metric-clickable" onclick="openModalMinH()" style="border-top:3px solid #06b6d4 !important">
+    <div class="metric metric-clickable c-cyan" onclick="openModalMinH()">
       <span class="m-icon">🕐</span>
       <div class="m-label">Menor espera</div>
       <div class="m-val">${fH(minH)} <span style="font-size:12px;font-weight:400;color:var(--tx2)">${Math.floor(minH/24)}d ${fH(minH%24)}</span></div>
       <div class="m-sub">${rMinH ? rMinH.cliente || rMinH.filial : '—'}</div>
     </div>
-    <div class="metric c-gold metric-clickable" onclick="openModalMaxH()" style="border-top:3px solid #f97316 !important">
+    <div class="metric metric-clickable c-orange" onclick="openModalMaxH()">
       <span class="m-icon">🕙</span>
       <div class="m-label">Maior espera</div>
       <div class="m-val">${fH(maxH)} <span style="font-size:12px;font-weight:400;color:var(--tx2)">${Math.floor(maxH/24)}d ${fH(maxH%24)}</span></div>
@@ -1220,13 +1228,13 @@ function renderMetrics() {
       <div class="m-val">${fS(frotaTotal)}</div>
       <div class="m-sub">${pct(frotaTotal)}% do total &nbsp;·&nbsp; ${frotaRows.length} registros</div>
     </div>
-    <div class="metric metric-clickable" style="border-top:3px solid #8b7cf6" onclick="openModalContrato('AGREGADO')" style="border-top:3px solid #ec4899 !important">
+    <div class="metric metric-clickable c-pink" onclick="openModalContrato('AGREGADO')">
       <span class="m-icon">🤝</span>
       <div class="m-label">Agregado</div>
       <div class="m-val">${fS(agregTotal)}</div>
       <div class="m-sub">${pct(agregTotal)}% do total &nbsp;·&nbsp; ${agregRows.length} registros</div>
     </div>
-    <div class="metric metric-clickable" style="border-top:3px solid #1D9E75" onclick="openModalContrato('TERCEIRO')" style="border-top:3px solid #0ea5e9 !important">
+    <div class="metric metric-clickable c-sky" onclick="openModalContrato('TERCEIRO')">
       <span class="m-icon">📦</span>
       <div class="m-label">Terceiro</div>
       <div class="m-val">${fS(tercTotal)}</div>
@@ -1242,7 +1250,7 @@ function renderFilialRankingCard(d) {
   const sorted = Object.entries(map).sort((a,b) => b[1]-a[1]);
   const [topFilial, topVal] = sorted[0] || ['—', 0];
   const total = d.reduce((s,r)=>s+r.valor,0);
-  return `<div class="metric metric-clickable" style="border-top:3px solid #4caf60" onclick="openModalFilialRanking()" style="border-top:3px solid #eab308 !important">
+  return `<div class="metric metric-clickable c-yellow" onclick="openModalFilialRanking()">
     <span class="m-icon">🏆</span>
     <div class="m-label">Filial líder</div>
     <div class="m-val" style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🥇 ${topFilial}</div>
