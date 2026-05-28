@@ -1542,15 +1542,38 @@ function mkDonut(id, labels, vals, colors, field) {
         const rows = filteredData.filter(r => (r[field] || '').trim() === lbl.trim());
         const tot  = rows.reduce((s, r) => s + r.valor, 0);
         const avgH = rows.length ? rows.reduce((s, r) => s + r.horas, 0) / rows.length : 0;
-        openModal(`${field.charAt(0).toUpperCase() + field.slice(1)}: ${lbl}`,
-          [...rows].sort((a, b) => b.valor - a.valor),
-          [
-            { label: 'Total R$',     val: fS(tot) },
-            { label: 'Registros',    val: rows.length },
-            { label: 'Média espera', val: fH(avgH) },
-            { label: 'Ticket médio', val: fS(rows.length ? tot / rows.length : 0) }
-          ]
-        );
+        const sortedRows = [...rows].sort((a, b) => b.valor - a.valor);
+        const title = `${field.charAt(0).toUpperCase() + field.slice(1)}: ${lbl}`;
+
+        if (field === 'ocorrencia') {
+          openModal(title, sortedRows, [{ label: ' ', val: ' ' }]);
+          const mm = document.getElementById('modalMetrics');
+          mm.style.display = 'block';
+          mm.innerHTML = `
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px">
+              <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(tot)}</div></div>
+              <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
+              <div class="modal-metric"><div class="mm-label">Média espera</div><div class="mm-val">${fH(avgH)}</div></div>
+              <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? tot/rows.length : 0)}</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+              ${contratoCards(sortedRows)}
+            </div>`;
+        } else {
+          openModal(title, sortedRows, [{ label: ' ', val: ' ' }]);
+        const mm = document.getElementById('modalMetrics');
+        mm.style.display = 'block';
+        mm.innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px">
+            <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(tot)}</div></div>
+            <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
+            <div class="modal-metric"><div class="mm-label">Média espera</div><div class="mm-val">${fH(avgH)}</div></div>
+            <div class="modal-metric"><div class="mm-label">Ticket médio</div><div class="mm-val">${fS(rows.length ? tot/rows.length : 0)}</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+            ${contratoCards(sortedRows)}
+          </div>`;
+        }
       }
     }
   });
@@ -1805,19 +1828,28 @@ function renderCharts() {
         },
         onClick: (e, els) => {
           if (!els.length) return;
-          const uf = ufK[els[0].index];
+          const uf  = ufK[els[0].index];
           const rows = filteredData.filter(r => r.uf === uf);
           const total = rows.reduce((s,r)=>s+r.valor,0);
           const fat   = rows.filter(r=>r.status.includes('FATURAD')).reduce((s,r)=>s+r.valor,0);
           const ag    = rows.filter(r=>r.status.includes('APROV')).reduce((s,r)=>s+r.valor,0);
           const rej   = rows.filter(r=>r.status.includes('REJEIT')).reduce((s,r)=>s+r.valor,0);
-          openModal(`🗺️ ${uf} — Detalhes`, rows, [
-            { label: 'Total R$',      val: fS(total) },
-            { label: 'Registros',     val: rows.length },
-            { label: 'Faturado',      val: fS(fat) },
-            { label: 'Ag. Aprovação', val: fS(ag) },
-            { label: 'Rejeitado',     val: fS(rej) },
-          ]);
+          const avgH  = rows.length ? rows.reduce((s,r)=>s+r.horas,0)/rows.length : 0;
+          const sortedRows = [...rows].sort((a,b)=>b.valor-a.valor);
+          openModal(`🗺️ ${uf} — Detalhes`, sortedRows, [{ label: ' ', val: ' ' }]);
+          const mm = document.getElementById('modalMetrics');
+          mm.style.display = 'block';
+          mm.innerHTML = `
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px">
+              <div class="modal-metric"><div class="mm-label">Total R$</div><div class="mm-val">${fS(total)}</div></div>
+              <div class="modal-metric"><div class="mm-label">Registros</div><div class="mm-val">${rows.length}</div></div>
+              <div class="modal-metric"><div class="mm-label">Faturado</div><div class="mm-val">${fS(fat)}</div></div>
+              <div class="modal-metric"><div class="mm-label">Ag. Aprovação</div><div class="mm-val">${fS(ag)}</div></div>
+              <div class="modal-metric"><div class="mm-label">Rejeitado</div><div class="mm-val">${fS(rej)}</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+              ${contratoCards(sortedRows)}
+            </div>`;
         }
       }
     });
