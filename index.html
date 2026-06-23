@@ -1403,7 +1403,7 @@ function openModalFat() {
 }
 
 function openModalAg() {
-  const rows  = allData.filter(r => r.status.includes('APROV'));
+  const rows  = filteredData.filter(r => r.status.includes('APROV'));
   const total = rows.reduce((s, r) => s + r.valor, 0);
   openModal('⏳ Ag. Aprovação — Detalhes', rows, [{ label: ' ', val: ' ' }]);
   const mm = document.getElementById('modalMetrics');
