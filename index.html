@@ -1050,7 +1050,7 @@ function applyFilters() {
       if (!hay.includes(q)) return false;
     }
     if (dtI || dtF) {
-      const rd = toDate(r.dataCte);
+      const rd = toDate(r.dataCte) || toDate(r.data);
       if (!rd) return false;
       if (dtI && rd < dtI) return false;
       if (dtF && rd > dtF) return false;
@@ -1105,31 +1105,9 @@ function renderMetrics() {
     return;
   }
 
-  // Total Geral = Faturado + Ag. Aprovação + Rejeitado (sem filtro de data)
-  const filialF    = selectedFiliais.size > 0 ? [...selectedFiliais] : null;
-  const contratoF  = selectedContratos.size > 0 ? [...selectedContratos] : null;
-  const ocorrenciaF = selectedOcorrencias.size > 0 ? [...selectedOcorrencias] : null;
-  const clienteF   = document.getElementById('selCliente').value;
-  const cidadeF    = document.getElementById('selCidade').value;
-  const placaF     = document.getElementById('selPlaca').value.toUpperCase().trim();
-  const cteF       = document.getElementById('selCte').value.trim();
-  const steF       = document.getElementById('selSte').value.trim();
-  const ofertaF    = document.getElementById('selOferta').value.trim();
+  // Total Geral = Faturado + Ag. Aprovação + Rejeitado (todos os filtros aplicados, incluindo data)
 
-  const dSemData = allData.filter(r => {
-    if (filialF && !filialF.includes(r.filial)) return false;
-    if (contratoF  && !contratoF.includes(r.contrato))   return false;
-    if (ocorrenciaF && !ocorrenciaF.includes(r.ocorrencia)) return false;
-    if (clienteF    && r.cliente    !== clienteF)    return false;
-    if (cidadeF     && r.cidade     !== cidadeF)     return false;
-    if (placaF      && !r.placa.includes(placaF))    return false;
-    if (cteF        && !r.cte.includes(cteF))        return false;
-    if (steF        && !String(r.ste||'').includes(steF)) return false;
-    if (ofertaF     && !String(r.oferta||'').includes(ofertaF)) return false;
-    return true;
-  });
-
-  const agRows  = dSemData.filter(r => r.status.includes('APROV'));
+  const agRows  = d.filter(r => r.status.includes('APROV'));
   const ag      = agRows.reduce((s, r) => s + r.valor, 0);
   const rejRows = d.filter(r => r.status.includes('REJEIT'));
   const rej     = rejRows.reduce((s, r) => s + r.valor, 0);
@@ -1137,7 +1115,7 @@ function renderMetrics() {
   // Faturado — filtrado por DATA CTE (período selecionado)
   const fat   = d.filter(r => r.status.includes('FATURAD')).reduce((s, r) => s + r.valor, 0);
 
-  // Total Geral = Faturado (DATA CTE) + Ag. Aprovação (tudo) + Rejeitado (DATA CTE)
+  // Total Geral = Faturado + Ag. Aprovação + Rejeitado (todos com os mesmos filtros, incluindo data)
   const total = fat + ag + rej;
   const vals  = d.map(r => r.valor).filter(v => v > 0);
 
@@ -1355,7 +1333,7 @@ function openModalFilialRanking() {
 
 function openModalTotal() {
   const fat  = filteredData.filter(r => r.status.includes('FATURAD')).reduce((s,r) => s+r.valor, 0);
-  const ag   = allData.filter(r => r.status.includes('APROV')).reduce((s,r) => s+r.valor, 0);
+  const ag   = filteredData.filter(r => r.status.includes('APROV')).reduce((s,r) => s+r.valor, 0);
   const rej  = filteredData.filter(r => r.status.includes('REJEIT')).reduce((s,r) => s+r.valor, 0);
   const total = fat + ag + rej;
   const avgV  = filteredData.length ? filteredData.reduce((s,r)=>s+r.valor,0) / filteredData.length : 0;
